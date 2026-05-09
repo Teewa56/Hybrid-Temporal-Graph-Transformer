@@ -19,8 +19,6 @@ A real-time, AI-powered fraud detection and trust-scoring engine built on top of
 - [Project Structure](#-project-structure)
 - [Low-Data Strategies](#-low-data-strategies)
 - [Compliance & Explainability](#-compliance--explainability)
-- [Judging Alignment](#-judging-alignment)
-- [Team](#-team)
 
 ---
 
