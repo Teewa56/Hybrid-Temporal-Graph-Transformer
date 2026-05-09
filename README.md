@@ -224,7 +224,7 @@ Squad API credentials (test environment)
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-team/trustguard.git
+git clone https://github.com/Teewa56/Hybrid-Temporal-Graph-Transformer.git
 cd trustguard
 
 # Create virtual environment
