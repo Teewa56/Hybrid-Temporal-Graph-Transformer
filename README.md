@@ -401,7 +401,7 @@ Hybrid-Temporal-Graph-Transformer/
 | GraphSAGE | Elliptic + PaySim graph | Barabási–Albert synthetic graphs |
 | CNN-GNN | UNSW-NB15 + Squad sandbox payloads | Programmatic anomaly injection |
 | TSSGC | Synthetic simulation | GSMA-calibrated generators |
-| GAN + Autoencoder | FantacyID | Self-generated GAN forgeries |
+| GAN + Autoencoder | FantasyID | Self-generated GAN forgeries |
 
 ---
 
@@ -436,4 +436,4 @@ MIT License — see [LICENSE](./LICENSE) for details.
 
 ---
 
-Link to the FantacyID dataset(for KYC) is [LINK](https://zenodo.org/records/17063366)
+Link to the FantasyID dataset(for KYC) is [LINK](https://zenodo.org/records/17063366)
