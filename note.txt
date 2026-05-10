@@ -1,0 +1,6 @@
+Key notes to be taken into consideration for anyone readaing this repo:
+
+1. PaySim is the backbone dataset for models 1 and 2, 
+    synthetic generation for models 3 and 4, and MIDV-500 for model 5.
+
+2. 

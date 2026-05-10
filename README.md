@@ -262,6 +262,18 @@ pytest tests/ -v
 pytest tests/test_integration.py -v  # Squad API integration tests
 ```
 
+### Generate everything at once
+```
+python synthetic_data_generator/pipeline/run_all.py
+
+# Or generate per model
+python synthetic_data_generator/behavioral/transaction_sequence_generator.py
+python synthetic_data_generator/graph/graph_builder.py
+python synthetic_data_generator/payload/payload_anomaly_injector.py
+python synthetic_data_generator/sim_swap/handover_event_simulator.py
+python synthetic_data_generator/kyc/forgery_simulator.py
+```
+
 ### Environment Variables
 
 ```env
@@ -320,11 +332,59 @@ Hybrid-Temporal-Graph-Transformer/
 │   ├── model_training.ipynb
 │   ├── graph_analysis.ipynb
 │   └── drift_simulation.ipynb
+├── synthetic_data_generator/
+│   ├── config.py
+│   ├── README.md
+│   │
+│   ├── behavioral/
+│   │   ├── __init__.py
+│   │   ├── user_profile_generator.py
+│   │   ├── transaction_sequence_generator.py
+│   │   └── anomaly_injector.py
+│   │
+│   ├── graph/
+│   │   ├── __init__.py
+│   │   ├── graph_builder.py
+│   │   ├── mule_network_simulator.py
+│   │   └── fraud_ring_injector.py
+│   │
+│   ├── payload/
+│   │   ├── __init__.py
+│   │   ├── legitimate_payload_generator.py
+│   │   ├── payload_anomaly_injector.py
+│   │   └── squad_payload_schema.py
+│   │
+│   ├── sim_swap/
+│   │   ├── __init__.py
+│   │   ├── device_profile_generator.py
+│   │   └── handover_event_simulator.py
+│   │
+│   ├── kyc/
+│   │   ├── __init__.py
+│   │   ├── document_metadata_generator.py
+│   │   └── forgery_simulator.py
+│   │
+│   └── pipeline/
+│       ├── __init__.py
+│       ├── run_all.py
+│       └── export.py
 ├── docker-compose.yml
 ├── requirements.txt
 ├── .env.example
 └── README.md
 ```
+
+---
+
+## Data Reference Table
+
+| Model | Primary Dataset | Backup / Augmentation |
+|---|---|---|
+| Transformer | PaySim + IEEE-CIS | VAE-generated sequences |
+| GraphSAGE | Elliptic + PaySim graph | Barabási–Albert synthetic graphs |
+| CNN-GNN | UNSW-NB15 + Squad sandbox payloads | Programmatic anomaly injection |
+| TSSGC | Synthetic simulation | GSMA-calibrated generators |
+| GAN + Autoencoder | MIDV-500 + FRGC | Self-generated GAN forgeries |
 
 ---
 
