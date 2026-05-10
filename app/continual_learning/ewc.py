@@ -97,4 +97,4 @@ class EWC:
         self.model = model
         self._compute_fisher(dataloader)
         self._store_means()
-        print("✅ EWC reference updated with new fraud pattern weights.")
+        print(" EWC reference updated with new fraud pattern weights.")

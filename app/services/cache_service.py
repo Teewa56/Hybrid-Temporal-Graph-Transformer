@@ -20,7 +20,7 @@ class CacheService:
     async def connect(self):
         self._client = await aioredis.from_url(REDIS_URL, decode_responses=True)
         await self._client.ping()
-        print("✅ Redis connected.")
+        print(" Redis connected.")
 
     async def disconnect(self):
         if self._client:

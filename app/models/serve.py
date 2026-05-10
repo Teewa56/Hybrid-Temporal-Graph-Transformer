@@ -31,7 +31,7 @@ class ModelServer:
         loop = asyncio.get_event_loop()
         await loop.run_in_executor(None, self._load_models_sync)
         self._loaded = True
-        print("✅ All 5 models loaded.")
+        print(" All 5 models loaded.")
 
     def _load_models_sync(self):
         self.transformer = BehavioralTransformer()

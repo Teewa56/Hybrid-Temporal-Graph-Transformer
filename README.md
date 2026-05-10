@@ -43,11 +43,11 @@ Hybrid-Temporal-Graph-Transformer is a **Hybrid Temporal Graph Transformer (TGT)
 Rather than a single model making a single guess, the TGT is an **ensemble of five specialized deep learning sub-architectures**, each purpose-built for a specific fraud surface, running in parallel and feeding a unified Decision Engine that produces a single, interpretable trust score for every transaction.
 
 **Key outcomes:**
-- ✅ Sub-200ms inference latency — fraud check completes before the user sees "Processing"
-- ✅ Unified Fraud Score (0–1) with three-zone routing: Green / Amber / Red
-- ✅ Automatic Squad Dispute API call on Red Zone detections — funds frozen before settlement
-- ✅ SHAP-based explainability on every blocked transaction for CBN compliance
-- ✅ Continual learning loop — the model gets sharper with every new fraud attempt
+-  Sub-200ms inference latency — fraud check completes before the user sees "Processing"
+-  Unified Fraud Score (0–1) with three-zone routing: Green / Amber / Red
+-  Automatic Squad Dispute API call on Red Zone detections — funds frozen before settlement
+-  SHAP-based explainability on every blocked transaction for CBN compliance
+-  Continual learning loop — the model gets sharper with every new fraud attempt
 
 ---
 
@@ -384,7 +384,7 @@ Hybrid-Temporal-Graph-Transformer/
 | GraphSAGE | Elliptic + PaySim graph | Barabási–Albert synthetic graphs |
 | CNN-GNN | UNSW-NB15 + Squad sandbox payloads | Programmatic anomaly injection |
 | TSSGC | Synthetic simulation | GSMA-calibrated generators |
-| GAN + Autoencoder | MIDV-500 + FRGC | Self-generated GAN forgeries |
+| GAN + Autoencoder | FantasyID | Self-generated GAN forgeries |
 
 ---
 

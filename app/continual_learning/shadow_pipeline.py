@@ -87,10 +87,10 @@ class ShadowPipeline:
         print(f"   Shadow > Live rate:  {improvement_rate:.2%}")
 
         if avg_delta <= self.max_delta and improvement_rate >= 0.55:
-            print("✅ Shadow model APPROVED for promotion.")
+            print(" Shadow model APPROVED for promotion.")
             self.promoted = True
         else:
-            print("❌ Shadow model NOT promoted — performance insufficient.")
+            print(" Shadow model NOT promoted — performance insufficient.")
 
     def should_promote(self) -> bool:
         return self.promoted
