@@ -1,6 +1,6 @@
 # Advanced Fraud Detection for African FinTechs
 
-A real-time, AI-powered fraud detection and trust-scoring engine built on top of the **Squad payment API**. TrustGuard uses a Hybrid Temporal Graph Transformer (TGT) architecture — an ensemble of five specialized deep learning models — to detect, score, and intercept fraudulent transactions before settlement.
+A real-time, AI-powered fraud detection and trust-scoring engine built on top of the **Squad payment API**. Hybrid-Temporal-Graph-Transformer uses a Hybrid Temporal Graph Transformer (TGT) architecture — an ensemble of five specialized deep learning models — to detect, score, and intercept fraudulent transactions before settlement.
 
 ---
 
@@ -38,7 +38,7 @@ Classical rule-based systems and standard ML models (Random Forest, Logistic Reg
 
 ## 💡 Solution Overview
 
-TrustGuard is a **Hybrid Temporal Graph Transformer (TGT)** — a real-time AI fraud detection and trust-scoring engine deployed as a closed-loop intelligence layer directly on top of the Squad payment API.
+Hybrid-Temporal-Graph-Transformer is a **Hybrid Temporal Graph Transformer (TGT)** — a real-time AI fraud detection and trust-scoring engine deployed as a closed-loop intelligence layer directly on top of the Squad payment API.
 
 Rather than a single model making a single guess, the TGT is an **ensemble of five specialized deep learning sub-architectures**, each purpose-built for a specific fraud surface, running in parallel and feeding a unified Decision Engine that produces a single, interpretable trust score for every transaction.
 
@@ -225,7 +225,7 @@ Squad API credentials (test environment)
 ```bash
 # Clone the repository
 git clone https://github.com/Teewa56/Hybrid-Temporal-Graph-Transformer.git
-cd trustguard
+cd Hybrid-Temporal-Graph-Transformer
 
 # Create virtual environment
 python -m venv venv
@@ -280,7 +280,7 @@ INFERENCE_TIMEOUT_MS=200
 ## 📁 Project Structure
 
 ```
-trustguard/
+Hybrid-Temporal-Graph-Transformer/
 ├── app/
 │   ├── main.py                    # FastAPI entrypoint
 │   ├── api/
@@ -330,7 +330,7 @@ trustguard/
 
 ## 📊 Low-Data Strategies
 
-African FinTechs rarely have large, clean, labeled fraud datasets. TrustGuard addresses this through five strategies:
+African FinTechs rarely have large, clean, labeled fraud datasets. Hybrid-Temporal-Graph-Transformer addresses this through five strategies:
 
 | Strategy | Implementation |
 |---|---|
@@ -344,7 +344,7 @@ African FinTechs rarely have large, clean, labeled fraud datasets. TrustGuard ad
 
 ## 🔍 Compliance & Explainability
 
-Every decision made by TrustGuard is explainable and auditable:
+Every decision made by Hybrid-Temporal-Graph-Transformer is explainable and auditable:
 
 - **SHAP Values** — computed for every blocked transaction, surfacing the top contributing features to the fraud score
 - **Transformer Attention Weights** — expose which transactions in the user's history most influenced the behavioral anomaly flag
