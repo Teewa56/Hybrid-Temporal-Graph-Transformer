@@ -95,42 +95,42 @@ A **GAN** is trained to understand how fraudulent IDs are synthesized, learning 
 User Transaction
       │
       ▼
- Squad Webhook  ──────────────────────────────────────────────────────┐
- (transaction.success / transfer.initiated)                           │
-      │                                                               │
-      ▼                                                               │
-  Redis Cache (sub-ms retrieval)                                      │
-      │                                                               │
-      ├──────────────────┬───────────────────────────────────────┐   │
-      ▼                  ▼                                         │   │
-Sequential Service   Graph Service                                │   │
-(last 50 txns →     (live transaction                            │   │
- sequence vector)    graph: accounts,                            │   │
-                     devices, IPs)                               │   │
-      │                  │                                         │   │
-      └────────┬──────────┘                                        │   │
-               ▼                                                   │   │
-     ┌─────────────────────────────────┐                           │   │
-     │     TGT Model Ensemble          │                           │   │
-     │  (All 5 models run in parallel) │                           │   │
-     │                                 │                           │   │
-     │  Transformer ──► Risk Score     │                           │   │
-     │  GraphSAGE   ──► Risk Score     │                           │   │
-     │  CNN-GNN     ──► Risk Score     │                           │   │
-     │  TSSGC       ──► Risk Score     │                           │   │
-     │  GAN Disc.   ──► Risk Score     │                           │   │
-     └──────────────┬──────────────────┘                           │   │
-                    ▼                                               │   │
-           Decision Engine                                         │   │
-           (Weighted Average)                                       │   │
-                    │                                               │   │
-        ┌───────────┼────────────────┐                             │   │
-        ▼           ▼                ▼                             │   │
-  Green (<0.65) Amber (0.65-0.89) Red (≥0.90)                     │   │
-  Proceed       Step-up Auth      Squad Dispute API ───────────────┘   │
-                (Face ID / OTP)   Freeze funds                         │
-                                                                        │
-                                  ◄─────────────────────────────────────┘
+ Squad Webhook  ───────────────────────────────────────────────────┐
+ (transaction.success / transfer.initiated)                        │
+      │                                                            │
+      ▼                                                            │
+  Redis Cache (sub-ms retrieval)                                   │
+      │                                                            │
+      ├──────────────────┬─────────────────────────────────────┐   │
+      ▼                  ▼                                     │   │
+Sequential Service   Graph Service                             │   │
+(last 50 txns →     (live transaction                          │   │
+ sequence vector)    graph: accounts,                          │   │
+                     devices, IPs)                             │   │
+      │                   │                                    │   │
+      └────────┬──────────┘                                    │   │
+               ▼                                               │   │
+     ┌─────────────────────────────────┐                       │   │
+     │     TGT Model Ensemble          │                       │   │
+     │  (All 5 models run in parallel) │                       │   │
+     │                                 │                       │   │
+     │  Transformer ──► Risk Score     │                       │   │
+     │  GraphSAGE   ──► Risk Score     │                       │   │
+     │  CNN-GNN     ──► Risk Score     │                       │   │
+     │  TSSGC       ──► Risk Score     │                       │   │
+     │  GAN Disc.   ──► Risk Score     │                       │   │
+     └──────────────┬──────────────────┘                       │   │
+                    ▼                                          │   │
+           Decision Engine                                     │   │
+           (Weighted Average)                                  │   │
+                    │                                          │   │
+        ┌───────────┼────────────────┐                         │   │
+        ▼           ▼                ▼                         │   │
+  Green (<0.65) Amber (0.65-0.89) Red (≥0.90)                  │   │
+  Proceed       Step-up Auth      Squad Dispute API ───────────┘   │
+                (Face ID / OTP)   Freeze funds                     │
+                                                                   │
+                                  ◄────────────────────────────────┘
                               Squad API handles execution
 ```
 
