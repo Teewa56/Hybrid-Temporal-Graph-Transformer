@@ -1,0 +1,93 @@
+version: "3.9"
+
+services:
+
+  # ── TrustGuard API ────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: trustguard_api
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - NEO4J_URI=bolt://neo4j:7687
+    depends_on:
+      redis:
+        condition: service_healthy
+      neo4j:
+        condition: service_healthy
+    volumes:
+      - ./logs:/app/logs
+      - ./checkpoints:/app/checkpoints
+    restart: unless-stopped
+    networks:
+      - trustguard_net
+
+  # ── Redis ─────────────────────────────────────────────────────
+  redis:
+    image: redis:7.2-alpine
+    container_name: trustguard_redis
+    ports:
+      - "6379:6379"
+    command: redis-server --maxmemory 512mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    volumes:
+      - redis_data:/data
+    networks:
+      - trustguard_net
+
+  # ── Neo4j ─────────────────────────────────────────────────────
+  neo4j:
+    image: neo4j:5.19-community
+    container_name: trustguard_neo4j
+    ports:
+      - "7474:7474"    # Browser UI
+      - "7687:7687"    # Bolt protocol
+    environment:
+      - NEO4J_AUTH=neo4j/${NEO4J_PASSWORD:-trustguard}
+      - NEO4J_PLUGINS=["apoc"]
+      - NEO4J_dbms_memory_heap_max__size=1G
+      - NEO4J_dbms_memory_pagecache_size=512M
+    healthcheck:
+      test: ["CMD", "neo4j", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+    networks:
+      - trustguard_net
+
+  # ── Synthetic Data Generator (one-shot) ───────────────────────
+  data_generator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: trustguard_datagen
+    command: python -m synthetic_data_generator.pipeline.run_all
+    env_file:
+      - .env
+    volumes:
+      - ./synthetic_data_generator/outputs:/app/synthetic_data_generator/outputs
+    profiles:
+      - datagen        # Only runs when: docker compose --profile datagen up
+    networks:
+      - trustguard_net
+
+volumes:
+  redis_data:
+  neo4j_data:
+  neo4j_logs:
+
+networks:
+  trustguard_net:
+    driver: bridge
