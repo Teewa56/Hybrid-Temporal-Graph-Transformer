@@ -262,16 +262,33 @@ pytest tests/ -v
 pytest tests/test_integration.py -v  # Squad API integration tests
 ```
 
-### Generate everything at once
+### Order to run project
 ```
-python synthetic_data_generator/pipeline/run_all.py
+# 1. Generate all synthetic training data
+python -m synthetic_data_generator.pipeline.run_all
 
-# Or generate per model
-python synthetic_data_generator/behavioral/transaction_sequence_generator.py
-python synthetic_data_generator/graph/graph_builder.py
-python synthetic_data_generator/payload/payload_anomaly_injector.py
-python synthetic_data_generator/sim_swap/handover_event_simulator.py
-python synthetic_data_generator/kyc/forgery_simulator.py
+# 2. Train all 5 models (run model_training.ipynb top to bottom)
+jupyter notebook notebooks/model_training.ipynb
+
+# 3. Export all models to ONNX
+python scripts/export_onnx.py
+
+# 4. Verify checkpoint status
+python -c "
+from app.models.serve import ModelServer
+import asyncio
+
+async def check():
+    s = ModelServer()
+    await s.load_all()
+    for k, v in s.checkpoint_status().items():
+        print(f'{k:<22} {v}')
+
+asyncio.run(check())
+"
+
+# 5. Start the API
+uvicorn app.main:app --reload --port 8000
 ```
 
 ### Environment Variables
