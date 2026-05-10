@@ -16,7 +16,7 @@ HEADERS = {
 
 class DisputeRequest(BaseModel):
     transaction_ref: str
-    reason: str = "Fraud detected by TrustGuard AI"
+    reason: str = "Fraud detected by Hybrid_Temporal_Graph_Transformer AI"
 
 
 class ReverseRequest(BaseModel):

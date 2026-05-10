@@ -38,7 +38,7 @@ Classical rule-based systems and standard ML models (Random Forest, Logistic Reg
 
 ## 💡 Solution Overview
 
-Hybrid-Temporal-Graph-Transformer is a **Hybrid Temporal Graph Transformer (TGT)** — a real-time AI fraud detection and trust-scoring engine deployed as a closed-loop intelligence layer directly on top of the Squad payment API.
+This is a **Hybrid Temporal Graph Transformer (TGT)** — a real-time AI fraud detection and trust-scoring engine deployed as a closed-loop intelligence layer directly on top of the Squad payment API.
 
 Rather than a single model making a single guess, the TGT is an **ensemble of five specialized deep learning sub-architectures**, each purpose-built for a specific fraud surface, running in parallel and feeding a unified Decision Engine that produces a single, interpretable trust score for every transaction.
 

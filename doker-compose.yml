@@ -2,12 +2,12 @@ version: "3.9"
 
 services:
 
-  # ── TrustGuard API ────────────────────────────────────────────
+  # ── Hybrid_Temporal_Graph_Transformer API ────────────────────────────────────────────
   api:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: trustguard_api
+    container_name: Hybrid_Temporal_Graph_Transformer_api
     ports:
       - "8000:8000"
     env_file:
@@ -25,12 +25,12 @@ services:
       - ./checkpoints:/app/checkpoints
     restart: unless-stopped
     networks:
-      - trustguard_net
+      - Hybrid_Temporal_Graph_Transformer_net
 
   # ── Redis ─────────────────────────────────────────────────────
   redis:
     image: redis:7.2-alpine
-    container_name: trustguard_redis
+    container_name: Hybrid_Temporal_Graph_Transformer_redis
     ports:
       - "6379:6379"
     command: redis-server --maxmemory 512mb --maxmemory-policy allkeys-lru
@@ -42,17 +42,17 @@ services:
     volumes:
       - redis_data:/data
     networks:
-      - trustguard_net
+      - Hybrid_Temporal_Graph_Transformer_net
 
   # ── Neo4j ─────────────────────────────────────────────────────
   neo4j:
     image: neo4j:5.19-community
-    container_name: trustguard_neo4j
+    container_name: Hybrid_Temporal_Graph_Transformer_neo4j
     ports:
       - "7474:7474"    # Browser UI
       - "7687:7687"    # Bolt protocol
     environment:
-      - NEO4J_AUTH=neo4j/${NEO4J_PASSWORD:-trustguard}
+      - NEO4J_AUTH=neo4j/${NEO4J_PASSWORD:-Hybrid_Temporal_Graph_Transformer}
       - NEO4J_PLUGINS=["apoc"]
       - NEO4J_dbms_memory_heap_max__size=1G
       - NEO4J_dbms_memory_pagecache_size=512M
@@ -65,14 +65,14 @@ services:
       - neo4j_data:/data
       - neo4j_logs:/logs
     networks:
-      - trustguard_net
+      - Hybrid_Temporal_Graph_Transformer_net
 
   # ── Synthetic Data Generator (one-shot) ───────────────────────
   data_generator:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: trustguard_datagen
+    container_name: Hybrid_Temporal_Graph_Transformer_datagen
     command: python -m synthetic_data_generator.pipeline.run_all
     env_file:
       - .env
@@ -81,7 +81,7 @@ services:
     profiles:
       - datagen        # Only runs when: docker compose --profile datagen up
     networks:
-      - trustguard_net
+      - Hybrid_Temporal_Graph_Transformer_net
 
 volumes:
   redis_data:
@@ -89,5 +89,5 @@ volumes:
   neo4j_logs:
 
 networks:
-  trustguard_net:
+  Hybrid_Temporal_Graph_Transformer_net:
     driver: bridge

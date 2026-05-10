@@ -92,7 +92,7 @@ class DecisionEngine:
         if zone == FraudZone.RED:
             await self._call_squad_dispute_api(
                 transaction_ref,
-                reason=f"TrustGuard RED ZONE: unified score {scores.unified_score:.3f}. "
+                reason=f"Hybrid_Temporal_Graph_Transformer RED ZONE: unified score {scores.unified_score:.3f}. "
                        f"Signals: {', '.join(top_signals)}",
             )
             action = "DISPUTE_RAISED — funds frozen before settlement"

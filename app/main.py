@@ -70,7 +70,7 @@ app.include_router(transactions.router, prefix="/squad", tags=["Transactions"])
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "service": "TrustGuard"}
+    return {"status": "ok", "service": "Hybrid_Temporal_Graph_Transformer"}
 
 
 @app.exception_handler(HTTPException)
