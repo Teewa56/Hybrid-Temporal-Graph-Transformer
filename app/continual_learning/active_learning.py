@@ -57,7 +57,7 @@ class ActiveLearningQueue:
         async with self._lock:
             self.queue.append(sample)
 
-        print(f"📥 Active Learning Queue: {transaction_ref} enqueued "
+        print(f" Active Learning Queue: {transaction_ref} enqueued "
               f"(score: {scores.unified_score:.3f})")
         return True
 

@@ -79,7 +79,7 @@ class EWC:
     def penalty(self, model: nn.Module) -> torch.Tensor:
         """
         Compute EWC penalty term: λ/2 * Σ F_i * (θ_i - θ*_i)²
-        Add this to your task loss during fine-tuning.
+        Add this to the task loss during fine-tuning.
         """
         loss = torch.tensor(0.0, requires_grad=True)
         for n, p in model.named_parameters():
