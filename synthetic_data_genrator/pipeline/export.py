@@ -151,4 +151,4 @@ def export_all(results: dict):
                 print(f"    ❌ Export failed: {e}")
 
     export_manifest(results)
-    print(f"\n  ✅ All exports complete → {OUTPUT_DIR}")
+    print(f"\n   All exports complete → {OUTPUT_DIR}")

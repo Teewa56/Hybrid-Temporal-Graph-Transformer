@@ -129,7 +129,7 @@ class DriftDetector:
                     self.drift_events.append(event)
                     new_events.append(event)
                     self.drift_count += 1
-                    print(f"⚠️ Drift detected on feature '{name}'")
+                    print(f" Drift detected on feature '{name}'")
 
         # Monitor model score distributions
         score_map = {
@@ -141,7 +141,7 @@ class DriftDetector:
         }
         for model, score in score_map.items():
             if self.score_detectors[model].update(score):
-                print(f"⚠️ Score distribution drift on model '{model}'")
+                print(f" Score distribution drift on model '{model}'")
 
         return new_events
 

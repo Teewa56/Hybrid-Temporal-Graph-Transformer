@@ -33,11 +33,11 @@ except ImportError:
 def _load_checkpoint(model, name: str):
     ckpt_path = CHECKPOINT_DIR / f"{name}.pt"
     if not ckpt_path.exists():
-        print(f"  ⚠️  No checkpoint for {name} — exporting with random weights.")
+        print(f"    No checkpoint for {name} — exporting with random weights.")
         return model
     state_dict = torch.load(ckpt_path, map_location="cpu")
     model.load_state_dict(state_dict)
-    print(f"  ✅ Loaded checkpoint: {ckpt_path}")
+    print(f"   Loaded checkpoint: {ckpt_path}")
     return model
 
 
@@ -51,7 +51,7 @@ def _verify_onnx(onnx_path: Path, dummy_inputs: list[np.ndarray], expected_shape
     assert actual_shape == expected_shape, (
         f"Shape mismatch: expected {expected_shape}, got {actual_shape}"
     )
-    print(f"  ✅ ONNX verification passed — output shape: {actual_shape}")
+    print(f"   ONNX verification passed — output shape: {actual_shape}")
 
 
 def export_transformer():
@@ -251,7 +251,7 @@ def print_summary():
         if path.exists():
             size_kb  = path.stat().st_size / 1024
             total_size += size_kb
-            print(f"  ✅ {label:<35} {size_kb:>8.1f} KB")
+            print(f"   {label:<35} {size_kb:>8.1f} KB")
         else:
             print(f"  ❌ {label:<35} {'MISSING':>8}")
     print(f"{'─'*55}")
@@ -283,7 +283,7 @@ if __name__ == "__main__":
     print_summary()
 
     if failed:
-        print(f"\n⚠️  {len(failed)} export(s) failed: {', '.join(failed)}")
+        print(f"\n  {len(failed)} export(s) failed: {', '.join(failed)}")
         sys.exit(1)
     else:
-        print("\n✅ All 5 models exported and verified successfully.")
+        print("\n All 5 models exported and verified successfully.")

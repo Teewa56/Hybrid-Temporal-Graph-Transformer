@@ -60,7 +60,7 @@ class GraphService:
         try:
             return await self._neo4j_update_and_fetch(body)
         except Exception as e:
-            print(f"⚠️ Neo4j error: {e}. Using synthetic snapshot.")
+            print(f" Neo4j error: {e}. Using synthetic snapshot.")
             return self._synthetic_snapshot(body)
 
     async def _neo4j_update_and_fetch(self, body: dict) -> dict:

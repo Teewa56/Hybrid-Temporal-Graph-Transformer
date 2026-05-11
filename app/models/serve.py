@@ -39,12 +39,12 @@ def _load_model(name: str):
         try:
             state_dict = torch.load(ckpt_path, map_location="cpu")
             model.load_state_dict(state_dict)
-            print(f"  ✅ {name:<20} loaded from {ckpt_path}")
+            print(f"   {name:<20} loaded from {ckpt_path}")
         except Exception as e:
-            print(f"  ⚠️  {name:<20} checkpoint found but failed to load: {e}")
+            print(f"    {name:<20} checkpoint found but failed to load: {e}")
             print(f"       Running with random weights.")
     else:
-        print(f"  ⚠️  {name:<20} no checkpoint at {ckpt_path} — random weights.")
+        print(f"    {name:<20} no checkpoint at {ckpt_path} — random weights.")
 
     return model
 
@@ -74,7 +74,7 @@ class ModelServer:
         self._loaded = True
 
     def _load_models_sync(self):
-        print(f"\n🔄 Loading models from {CHECKPOINT_DIR}/")
+        print(f"\n Loading models from {CHECKPOINT_DIR}/")
         CHECKPOINT_DIR.mkdir(parents=True, exist_ok=True)
 
         self.transformer     = _load_model("transformer")
@@ -93,7 +93,7 @@ class ModelServer:
         untrained = len(self._ckpt_status) - trained
         print(f"\n  {trained}/5 models loaded from checkpoints.")
         if untrained:
-            print(f"  ⚠️  {untrained} model(s) running on random weights — "
+            print(f"    {untrained} model(s) running on random weights — "
                   f"run model_training.ipynb to fix this.")
 
     async def run_ensemble(
@@ -154,6 +154,6 @@ class ModelServer:
     def checkpoint_status(self) -> dict:
         """Returns which models are running on trained vs. random weights."""
         return {
-            name: "✅ trained" if loaded else "⚠️  random weights"
+            name: " trained" if loaded else "  random weights"
             for name, loaded in self._ckpt_status.items()
         }
