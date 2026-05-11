@@ -19,16 +19,16 @@ Redis and Neo4j must be running before the API starts. Open a terminal and run b
 ```bash
 # Redis — in-memory transaction cache
 docker run -d \
-  --name trustguard_redis \
+  --name Hybrid_Temporal_Graph_Transformer_redis \
   -p 6379:6379 \
   redis:7.2-alpine \
   redis-server --maxmemory 512mb --maxmemory-policy allkeys-lru
 
 # Neo4j — live transaction graph
 docker run -d \
-  --name trustguard_neo4j \
+  --name Hybrid_Temporal_Graph_Transformer_neo4j \
   -p 7474:7474 -p 7687:7687 \
-  -e NEO4J_AUTH=neo4j/trustguard \
+  -e NEO4J_AUTH=neo4j/Hybrid_Temporal_Graph_Transformer \
   neo4j:5.19-community
 
 # Verify both are up
@@ -38,8 +38,8 @@ docker ps
 Wait about 15 seconds for Neo4j to fully initialize, then confirm:
 
 ```bash
-docker logs trustguard_redis   # should end with: Ready to accept connections
-docker logs trustguard_neo4j   # should end with: Started
+docker logs Hybrid_Temporal_Graph_Transformer_redis   # should end with: Ready to accept connections
+docker logs Hybrid_Temporal_Graph_Transformer_neo4j   # should end with: Started
 ```
 
 ---
@@ -199,7 +199,7 @@ Expected startup output:
 
   5/5 models loaded from checkpoints.
  Redis connected.
- TrustGuard online — all models loaded, cache connected.
+ Hybrid_Temporal_Graph_Transformer online — all models loaded, cache connected.
 
 INFO:     Uvicorn running on http://0.0.0.0:8000
 ```
@@ -208,7 +208,7 @@ Confirm the API is live:
 
 ```bash
 curl http://localhost:8000/health
-# {"status": "ok", "service": "TrustGuard"}
+# {"status": "ok", "service": "Hybrid_Temporal_Graph_Transformer"}
 ```
 
 ---

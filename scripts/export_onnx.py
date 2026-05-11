@@ -1,5 +1,5 @@
 """
-Export all five TrustGuard models to ONNX format for quantized inference.
+Export all five Hybrid_Temporal_Graph_Transformer models to ONNX format for quantized inference.
 
 Usage:
     python scripts/export_onnx.py
@@ -260,7 +260,7 @@ def print_summary():
 
 
 if __name__ == "__main__":
-    print("TrustGuard — ONNX Model Export")
+    print("Hybrid_Temporal_Graph_Transformer — ONNX Model Export")
     print(f"Checkpoint dir: {CHECKPOINT_DIR}")
     print(f"ONNX output:    {ONNX_DIR}")
 
