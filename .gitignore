@@ -1,3 +1,4 @@
 /data/FantasyID
 .env
 venv
+.venv
