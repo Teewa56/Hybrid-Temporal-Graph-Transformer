@@ -241,55 +241,7 @@ cp .env.example .env
 
 ### Running the System
 
-```bash
-# Start Redis
-docker run -d -p 6379:6379 redis
-
-# Start Neo4j
-docker run -d -p 7474:7474 -p 7687:7687 neo4j
-
-# Start the API server
-uvicorn app.main:app --reload --port 8000
-
-# In a separate terminal, run model inference server
-python -m app.models.serve
-```
-
-### Running Tests
-
-```bash
-pytest tests/ -v
-pytest tests/test_integration.py -v  # Squad API integration tests
-```
-
-### Order to run project
-```
-# 1. Generate all synthetic training data
-python -m synthetic_data_generator.pipeline.run_all
-
-# 2. Train all 5 models (run model_training.ipynb top to bottom)
-jupyter notebook notebooks/model_training.ipynb
-
-# 3. Export all models to ONNX
-python scripts/export_onnx.py
-
-# 4. Verify checkpoint status
-python -c "
-from app.models.serve import ModelServer
-import asyncio
-
-async def check():
-    s = ModelServer()
-    await s.load_all()
-    for k, v in s.checkpoint_status().items():
-        print(f'{k:<22} {v}')
-
-asyncio.run(check())
-"
-
-# 5. Start the API
-uvicorn app.main:app --reload --port 8000
-```
+Check [HERE](./run_project.md)
 
 ### Environment Variables
 
