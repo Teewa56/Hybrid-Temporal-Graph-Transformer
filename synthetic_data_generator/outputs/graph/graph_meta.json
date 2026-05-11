@@ -1,0 +1,109 @@
+{
+  "n_nodes": 5469,
+  "n_edges": 16863,
+  "n_legit": 5300,
+  "n_mule": 169,
+  "fraud_rate": 0.08575607972206985,
+  "mule_networks": [
+    {
+      "network_id": "ac0fa25e",
+      "size": 14,
+      "hop_depth": 3
+    },
+    {
+      "network_id": "3f2ac6d7",
+      "size": 12,
+      "hop_depth": 3
+    },
+    {
+      "network_id": "080d1a32",
+      "size": 8,
+      "hop_depth": 3
+    },
+    {
+      "network_id": "05f35978",
+      "size": 10,
+      "hop_depth": 3
+    },
+    {
+      "network_id": "87b55c39",
+      "size": 5,
+      "hop_depth": 3
+    },
+    {
+      "network_id": "adf2085f",
+      "size": 7,
+      "hop_depth": 3
+    },
+    {
+      "network_id": "751396b3",
+      "size": 10,
+      "hop_depth": 3
+    },
+    {
+      "network_id": "47cb8094",
+      "size": 7,
+      "hop_depth": 3
+    },
+    {
+      "network_id": "ae0b8c77",
+      "size": 4,
+      "hop_depth": 3
+    },
+    {
+      "network_id": "288836e0",
+      "size": 15,
+      "hop_depth": 3
+    },
+    {
+      "network_id": "38d10c88",
+      "size": 13,
+      "hop_depth": 3
+    },
+    {
+      "network_id": "44a1b83e",
+      "size": 11,
+      "hop_depth": 3
+    },
+    {
+      "network_id": "4f43b3e3",
+      "size": 3,
+      "hop_depth": 3
+    },
+    {
+      "network_id": "6e15c219",
+      "size": 6,
+      "hop_depth": 3
+    },
+    {
+      "network_id": "f52397f5",
+      "size": 3,
+      "hop_depth": 3
+    },
+    {
+      "network_id": "a4a1bab1",
+      "size": 8,
+      "hop_depth": 3
+    },
+    {
+      "network_id": "fd0f6866",
+      "size": 4,
+      "hop_depth": 3
+    },
+    {
+      "network_id": "1d6a9cd0",
+      "size": 9,
+      "hop_depth": 3
+    },
+    {
+      "network_id": "d141ebd3",
+      "size": 7,
+      "hop_depth": 3
+    },
+    {
+      "network_id": "b50fc4b7",
+      "size": 13,
+      "hop_depth": 3
+    }
+  ]
+}

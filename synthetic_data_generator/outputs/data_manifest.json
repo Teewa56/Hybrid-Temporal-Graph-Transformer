@@ -1,0 +1,65 @@
+{
+  "generated_at": "2026-05-11T06:37:05.100030Z",
+  "config": {
+    "behavioral": {
+      "n_users": 2000,
+      "fraud_injection_rate": 0.08
+    },
+    "graph": {
+      "n_legit_accounts": 5000,
+      "n_fraud_rings": 20
+    },
+    "payload": {
+      "n_legit_payloads": 10000,
+      "n_anomalous_payloads": 2000
+    },
+    "sim_swap": {
+      "n_users": 2000,
+      "n_sim_swap_events": 400
+    },
+    "kyc": {
+      "n_legitimate_docs": 5000,
+      "n_forged_docs": 1000
+    }
+  },
+  "summary": {
+    "behavioral": {
+      "users": 2000,
+      "sequences": 2000,
+      "total_transactions": 182887,
+      "fraud_transactions": 382,
+      "fraud_rate": 0.0021
+    },
+    "graph": {
+      "n_nodes": 5469,
+      "n_edges": 16863,
+      "fraud_rate": 0.08575607972206985,
+      "n_mule": 169
+    },
+    "payload": {
+      "total": 12000,
+      "legit": 10000,
+      "anomalous": 2000,
+      "fraud_rate": 0.1667
+    },
+    "sim_swap": {
+      "users": 2000,
+      "sim_swap_events": 400,
+      "total_device_events": 61036,
+      "swap_rate": 0.2
+    },
+    "kyc": {
+      "total": 6000,
+      "legit": 5000,
+      "forged": 1000,
+      "fraud_rate": 0.1667
+    }
+  },
+  "output_files": {
+    "behavioral": "behavioral/transactions.json",
+    "graph": "graph/node_features.npy + edge_index.npy + labels.npy",
+    "payload": "payload/payloads.json",
+    "sim_swap": "sim_swap/device_histories.json",
+    "kyc": "kyc/documents.json"
+  }
+}

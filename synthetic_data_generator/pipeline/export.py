@@ -88,6 +88,39 @@ def export_kyc(data: dict):
 
 
 def export_manifest(results: dict):
+    def _safe_summary(stats: dict) -> dict:
+        """
+        Strip any non-serializable objects (dataclasses, numpy types, raw data)
+        from the summary. Only keep primitive stats fields.
+        """
+        SKIP_KEYS = {"data", "profiles", "accounts"}
+        safe = {}
+        for k, v in stats.items():
+            if k in SKIP_KEYS:
+                continue
+            if isinstance(v, (str, int, float, bool)):
+                safe[k] = v
+            elif isinstance(v, (np.integer,)):
+                safe[k] = int(v)
+            elif isinstance(v, (np.floating,)):
+                safe[k] = float(v)
+            elif isinstance(v, list):
+                # Only include if it's a list of primitives or plain dicts
+                try:
+                    json.dumps(v)
+                    safe[k] = v
+                except (TypeError, ValueError):
+                    safe[k] = f"<{len(v)} items — not serializable>"
+            elif isinstance(v, dict):
+                try:
+                    json.dumps(v)
+                    safe[k] = v
+                except (TypeError, ValueError):
+                    safe[k] = "<not serializable>"
+            else:
+                safe[k] = str(v)
+        return safe
+
     manifest = {
         "generated_at": datetime.utcnow().isoformat() + "Z",
         "config": {
@@ -113,23 +146,22 @@ def export_manifest(results: dict):
             },
         },
         "summary": {
-            module: {k: v for k, v in stats.items() if k != "data"}
+            module: _safe_summary(stats)
             for module, stats in results.items()
             if isinstance(stats, dict) and "error" not in stats
         },
         "output_files": {
-            "behavioral":  "behavioral/transactions.json",
-            "graph":       "graph/node_features.npy + edge_index.npy + labels.npy",
-            "payload":     "payload/payloads.json",
-            "sim_swap":    "sim_swap/device_histories.json",
-            "kyc":         "kyc/documents.json",
+            "behavioral": "behavioral/transactions.json",
+            "graph":      "graph/node_features.npy + edge_index.npy + labels.npy",
+            "payload":    "payload/payloads.json",
+            "sim_swap":   "sim_swap/device_histories.json",
+            "kyc":        "kyc/documents.json",
         },
     }
 
     with open(OUTPUT_DIR / "data_manifest.json", "w") as f:
-        json.dump(manifest, f, indent=2)
+        json.dump(manifest, f, indent=2, default=_numpy_serializer)
     print(f"    📋 Manifest written → data_manifest.json")
-
 
 def export_all(results: dict):
     print(f"\n  Output directory: {OUTPUT_DIR}")
