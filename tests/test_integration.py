@@ -3,7 +3,9 @@ import json
 import hmac
 import hashlib
 from unittest.mock import AsyncMock, patch, MagicMock
-
+import os
+from dotenv import load_dotenv
+load_dotenv()
 from fastapi.testclient import TestClient
 from httpx import AsyncClient
 
@@ -12,7 +14,7 @@ from app.main import app
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
-SQUAD_TEST_SECRET = "test_webhook_secret"
+SQUAD_TEST_SECRET = os.getenv("SQUAD_WEBHOOK_SECRET")
 
 SAMPLE_WEBHOOK_PAYLOAD = {
     "Event": "transaction.success",
