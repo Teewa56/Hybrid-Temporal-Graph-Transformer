@@ -170,10 +170,10 @@ The TGT system incorporates a **Continual Learning Loop** built on:
 |---|---|
 | API Framework | Python + FastAPI |
 | GNN Models | PyTorch Geometric |
-| Transformer Models | HuggingFace Transformers |
+| Transformer Models | Pytorch Transformers |
 | Graph Database | Neo4j (account relationship store) |
 | In-memory Cache | Redis (sub-ms behavioral lookups) |
-| Model Serving | ONNX / TensorRT (quantized inference) |
+| Model Serving | ONNX (quantized inference) |
 | Infrastructure | AWS |
 | Explainability | SHAP + Attention Weights (CBN compliance) |
 | Payment API | SquadCo API |
