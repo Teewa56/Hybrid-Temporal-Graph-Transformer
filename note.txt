@@ -5,3 +5,5 @@ Key notes to be taken into consideration for anyone readaing this repo:
 
 2. The data used in here are the data I was able to find online, they are not African focused,
     but can be tailored to so when there is available data for them.
+
+3. For the hackathon demo, i used synthetic data
