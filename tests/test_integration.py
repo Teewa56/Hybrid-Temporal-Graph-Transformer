@@ -6,13 +6,14 @@ from unittest.mock import AsyncMock, patch, MagicMock
 import os
 from dotenv import load_dotenv
 load_dotenv()
+
 from fastapi.testclient import TestClient
-from httpx import AsyncClient
+from httpx import AsyncClient, ASGITransport
 
 from app.main import app
 
 
-# ── Helpers ──────────────────────────────────────────────────────────────────
+# ── Helpers ───────────────────────────────────────────────────────────────────
 
 SQUAD_TEST_SECRET = os.getenv("SQUAD_WEBHOOK_SECRET")
 
@@ -41,39 +42,37 @@ def _sign_payload(payload: dict, secret: str) -> str:
     return hmac.new(secret.encode(), raw, hashlib.sha512).hexdigest()
 
 
-# ── App Setup for Tests ───────────────────────────────────────────────────────
-
-@pytest.fixture(scope="module")
-def mock_app_state():
-    """Patch app lifespan dependencies so tests run without real Redis/Neo4j."""
+def _mock_app_state():
+    """
+    Build mock objects for app.state and inject them directly.
+    Called inside each test that hits the background pipeline.
+    """
     mock_cache = AsyncMock()
-    mock_cache.connect = AsyncMock()
-    mock_cache.disconnect = AsyncMock()
-    mock_cache.set = AsyncMock()
-    mock_cache.get = AsyncMock(return_value=None)
-    mock_cache.get_list = AsyncMock(return_value=[])
+    mock_cache.set        = AsyncMock()
+    mock_cache.get        = AsyncMock(return_value=None)
+    mock_cache.get_list   = AsyncMock(return_value=[])
     mock_cache.push_to_list = AsyncMock()
 
+    mock_scores = MagicMock()
+    mock_scores.unified_score       = 0.30
+    mock_scores.transformer_score   = 0.25
+    mock_scores.graphsage_score     = 0.30
+    mock_scores.cnn_gnn_score       = 0.20
+    mock_scores.tssgc_score         = 0.28
+    mock_scores.gan_autoencoder_score = 0.15
+    mock_scores.to_dict = lambda: {"unified": 0.30}
+
     mock_model_server = AsyncMock()
-    mock_model_server.load_all = AsyncMock()
-    mock_model_server.run_ensemble = AsyncMock(return_value=MagicMock(
-        unified_score=0.30,
-        transformer_score=0.25,
-        graphsage_score=0.30,
-        cnn_gnn_score=0.20,
-        tssgc_score=0.28,
-        gan_autoencoder_score=0.15,
-        to_dict=lambda: {"unified": 0.30},
-    ))
+    mock_model_server.run_ensemble = AsyncMock(return_value=mock_scores)
 
     mock_drift = MagicMock()
     mock_drift.observe = MagicMock()
 
-    return {
-        "cache": mock_cache,
-        "model_server": mock_model_server,
-        "drift_detector": mock_drift,
-    }
+    app.state.cache          = mock_cache
+    app.state.model_server   = mock_model_server
+    app.state.drift_detector = mock_drift
+
+    return mock_cache, mock_model_server, mock_drift
 
 
 # ── Webhook Endpoint Tests ────────────────────────────────────────────────────
@@ -86,7 +85,8 @@ class TestWebhookEndpoint:
         assert response.status_code == 200
         assert response.json()["status"] == "ok"
 
-    def test_ignores_unknown_events(self, mock_app_state):
+    def test_ignores_unknown_events(self):
+        _mock_app_state()
         with patch("app.api.webhooks.SQUAD_SECRET", ""):
             client = TestClient(app)
             payload = {**SAMPLE_WEBHOOK_PAYLOAD, "Event": "refund.completed"}
@@ -98,19 +98,24 @@ class TestWebhookEndpoint:
         assert response.status_code == 200
         assert response.json()["status"] == "ignored"
 
-    def test_webhook_returns_200_fast(self, mock_app_state):
+    def test_webhook_returns_200_fast(self):
         """Webhook must return 200 immediately — pipeline runs in background."""
-        with patch("app.api.webhooks.SQUAD_SECRET", ""):
+        _mock_app_state()
+
+        with patch("app.api.webhooks.SQUAD_SECRET", ""), \
+             patch("app.api.webhooks._run_fraud_pipeline", new_callable=AsyncMock):
             client = TestClient(app)
             response = client.post(
                 "/squad/webhook",
                 json=SAMPLE_WEBHOOK_PAYLOAD,
                 headers={"Content-Type": "application/json"},
             )
+
         assert response.status_code == 200
         assert "transaction_ref" in response.json()
 
     def test_rejects_invalid_signature(self):
+        _mock_app_state()
         with patch("app.api.webhooks.SQUAD_SECRET", SQUAD_TEST_SECRET):
             client = TestClient(app)
             response = client.post(
@@ -124,12 +129,14 @@ class TestWebhookEndpoint:
         assert response.status_code == 401
 
     def test_accepts_valid_signature(self):
+        _mock_app_state()
         payload_bytes = json.dumps(SAMPLE_WEBHOOK_PAYLOAD).encode()
         signature = hmac.new(
             SQUAD_TEST_SECRET.encode(), payload_bytes, hashlib.sha512
         ).hexdigest()
 
-        with patch("app.api.webhooks.SQUAD_SECRET", SQUAD_TEST_SECRET):
+        with patch("app.api.webhooks.SQUAD_SECRET", SQUAD_TEST_SECRET), \
+             patch("app.api.webhooks._run_fraud_pipeline", new_callable=AsyncMock):
             client = TestClient(app)
             response = client.post(
                 "/squad/webhook",
@@ -142,6 +149,7 @@ class TestWebhookEndpoint:
         assert response.status_code == 200
 
     def test_rejects_malformed_json(self):
+        _mock_app_state()
         with patch("app.api.webhooks.SQUAD_SECRET", ""):
             client = TestClient(app)
             response = client.post(
@@ -158,6 +166,8 @@ class TestDisputeEndpoint:
 
     @pytest.mark.asyncio
     async def test_raise_dispute_calls_squad(self):
+        _mock_app_state()
+
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.json.return_value = {"status": "success", "message": "Dispute raised"}
@@ -166,7 +176,11 @@ class TestDisputeEndpoint:
             mock_client.return_value.__aenter__.return_value.post = AsyncMock(
                 return_value=mock_response
             )
-            async with AsyncClient(app=app, base_url="http://test") as ac:
+            # Use ASGITransport — correct way to test ASGI apps with httpx
+            async with AsyncClient(
+                transport=ASGITransport(app=app),
+                base_url="http://test"
+            ) as ac:
                 response = await ac.post(
                     "/squad/dispute",
                     json={
@@ -174,6 +188,7 @@ class TestDisputeEndpoint:
                         "reason": "Fraud detected",
                     },
                 )
+
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "dispute_raised"
@@ -181,6 +196,8 @@ class TestDisputeEndpoint:
 
     @pytest.mark.asyncio
     async def test_reverse_transaction(self):
+        _mock_app_state()
+
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.json.return_value = {"status": "success"}
@@ -189,11 +206,15 @@ class TestDisputeEndpoint:
             mock_client.return_value.__aenter__.return_value.post = AsyncMock(
                 return_value=mock_response
             )
-            async with AsyncClient(app=app, base_url="http://test") as ac:
+            async with AsyncClient(
+                transport=ASGITransport(app=app),
+                base_url="http://test"
+            ) as ac:
                 response = await ac.post(
                     "/squad/reverse",
                     json={"transaction_ref": "TESTREF000001"},
                 )
+
         assert response.status_code == 200
         assert response.json()["status"] == "reversed"
 
@@ -211,12 +232,12 @@ class TestSyntheticDataPipeline:
         )
         assert len(profiles) == 10
 
-        seq_gen = TransactionSequenceGenerator(seed=42)
+        seq_gen   = TransactionSequenceGenerator(seed=42)
         sequences = [seq_gen.generate_for_user(p, n_transactions=20) for p in profiles]
         assert all(len(s) == 20 for s in sequences)
 
         injector = AnomalyInjector(seed=42)
-        pairs = list(zip(sequences, profiles))
+        pairs    = list(zip(sequences, profiles))
         injected = injector.inject_batch(pairs, fraud_rate=0.5)
         assert len(injected) == 10
 
@@ -224,8 +245,8 @@ class TestSyntheticDataPipeline:
         from synthetic_data_generator.payload import (
             LegitimatePayloadGenerator, PayloadAnomalyInjector, SquadPayloadSchema
         )
-        schema = SquadPayloadSchema()
-        gen = LegitimatePayloadGenerator(seed=42)
+        schema   = SquadPayloadSchema()
+        gen      = LegitimatePayloadGenerator(seed=42)
         payloads = gen.generate_batch(n=20)
         assert len(payloads) == 20
 
@@ -233,19 +254,19 @@ class TestSyntheticDataPipeline:
             is_valid, errors = schema.validate(p)
             assert is_valid, f"Invalid payload: {errors}"
 
-        injector = PayloadAnomalyInjector(seed=42)
+        injector  = PayloadAnomalyInjector(seed=42)
         anomalous = injector.inject_batch(payloads, n_anomalous=10)
         assert len(anomalous) == 10
         assert all(p["label"] == 1 for p in anomalous)
 
     def test_kyc_pipeline_runs(self):
         from synthetic_data_generator.kyc import DocumentMetadataGenerator, ForgerySimulator
-        gen = DocumentMetadataGenerator(seed=42)
-        docs = gen.generate_batch(n=20)
+        gen    = DocumentMetadataGenerator(seed=42)
+        docs   = gen.generate_batch(n=20)
         assert len(docs) == 20
         assert all(d.label == 0 for d in docs)
 
-        sim = ForgerySimulator(seed=42)
+        sim    = ForgerySimulator(seed=42)
         forged = sim.generate_forged_batch(docs, n=10)
         assert len(forged) == 10
         assert all(d.label == 1 for d in forged)
@@ -254,12 +275,10 @@ class TestSyntheticDataPipeline:
         from synthetic_data_generator.sim_swap import (
             DeviceProfileGenerator, HandoverEventSimulator
         )
-        gen = DeviceProfileGenerator(seed=42)
-        histories = gen.generate_batch(n_users=20)
+        gen        = DeviceProfileGenerator(seed=42)
+        histories  = gen.generate_batch(n_users=20)
         assert len(histories) == 20
 
-        sim = HandoverEventSimulator(seed=42)
+        sim        = HandoverEventSimulator(seed=42)
         with_swaps = sim.simulate_batch(histories)
         assert len(with_swaps) == 20
-        swap_count = sum(1 for h in with_swaps if h.has_sim_swap)
-        assert swap_count >= 0  # May be 0 on small batches
