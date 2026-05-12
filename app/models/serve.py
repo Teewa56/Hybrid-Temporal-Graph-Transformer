@@ -154,6 +154,6 @@ class ModelServer:
     def checkpoint_status(self) -> dict:
         """Returns which models are running on trained vs. random weights."""
         return {
-            name: " trained" if loaded else "  random weights"
+            name: "trained" if loaded else "random weights"
             for name, loaded in self._ckpt_status.items()
         }

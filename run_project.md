@@ -119,13 +119,13 @@ python scripts/export_onnx.py
 
 Expected output:
 ```
-Behavioral Transformer          284.3 KB
-GraphSAGE (classifier head)      18.1 KB
-CNN-GNN Hybrid                  156.7 KB
-TSSGC (SIM Swap)                 92.4 KB
-GAN + Autoencoder (KYC)         201.5 KB
+Behavioral Transformer          25.3 KB
+GraphSAGE (classifier head)      1.2 KB
+CNN-GNN Hybrid                  4.4 KB
+TSSGC (SIM Swap)                 1206.7 KB
+GAN + Autoencoder (KYC)         47.8 KB
 ─────────────────────────────────────────
-  Total                            753.0 KB
+  Total                            1285.3 KB
 All 5 models exported and verified successfully.
 ```
 

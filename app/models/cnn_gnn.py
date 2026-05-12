@@ -5,21 +5,14 @@ import numpy as np
 
 
 class PayloadCNN(nn.Module):
-    """
-    1D CNN for detecting structural anomalies in transaction API payloads.
-    Treats the serialized payload as a sequence of feature values and
-    applies convolutional filters to detect tampered fields and malformed patterns.
-    """
-
     def __init__(self, input_dim: int = 64, num_filters: int = 128, kernel_size: int = 3):
         super().__init__()
         self.conv1 = nn.Conv1d(1, num_filters, kernel_size, padding=1)
         self.conv2 = nn.Conv1d(num_filters, num_filters // 2, kernel_size, padding=1)
-        self.pool = nn.AdaptiveMaxPool1d(16)
+        self.pool  = nn.MaxPool1d(kernel_size=4, stride=4)
         self.flatten_dim = (num_filters // 2) * 16
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        # x: (batch, input_dim) → unsqueeze to (batch, 1, input_dim)
         x = x.unsqueeze(1)
         x = F.relu(self.conv1(x))
         x = F.relu(self.conv2(x))

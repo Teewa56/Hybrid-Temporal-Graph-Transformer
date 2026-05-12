@@ -20,6 +20,7 @@ from pathlib import Path
 CHECKPOINT_DIR = Path(os.getenv("CHECKPOINT_DIR", "checkpoints"))
 ONNX_DIR       = CHECKPOINT_DIR / "onnx"
 ONNX_DIR.mkdir(parents=True, exist_ok=True)
+DEFAULT_OPSET = 18
 
 try:
     import onnx
@@ -92,44 +93,43 @@ def export_graphsage():
     print("\n[2/5] Exporting GraphSAGE...")
     from app.models.graphsage import GraphSAGEFraudDetector
 
-    model = _load_checkpoint(GraphSAGEFraudDetector(), "graphsage")
+    # Must match exactly how the model was instantiated in graph_analysis.ipynb
+    model = GraphSAGEFraudDetector(
+        in_channels=64,
+        hidden_channels=128,
+        out_channels=1,      # trained with out_channels=1, direct fraud score
+        num_layers=3,
+    )
+    model = _load_checkpoint(model, "graphsage")
     model.eval()
 
-    # GraphSAGE takes node features + edge_index
-    # For ONNX export we use a fixed-size dummy graph (10 nodes, 20 edges)
-    dummy_x          = torch.randn(10, 64)
-    dummy_edge_index = torch.randint(0, 10, (2, 20), dtype=torch.long)
-    onnx_path        = ONNX_DIR / "graphsage.onnx"
+    dummy_input = torch.randn(1, 1)   # out_channels=1 — embedding fed directly to sigmoid
+    onnx_path   = ONNX_DIR / "graphsage.onnx"
 
-    # ONNX doesn't support dynamic graph topology well with PyG ops.
-    # Export the classifier head only — GNN convolutions run in PyTorch,
-    # only the final MLP classifier is exported for quantized serving.
-    classifier_input = torch.randn(1, 64)
+    classifier = model.classifier
+    classifier.eval()
 
     torch.onnx.export(
-        model.classifier,
-        (classifier_input,),
+        classifier,
+        (dummy_input,),
         str(onnx_path),
-        input_names  = ["node_embedding"],
-        output_names = ["fraud_score"],
-        dynamic_axes = {
+        input_names   = ["node_embedding"],
+        output_names  = ["fraud_score"],
+        dynamic_axes  = {
             "node_embedding": {0: "batch_size"},
             "fraud_score":    {0: "batch_size"},
         },
-        opset_version     = 17,
+        opset_version      = 17,
         do_constant_folding= True,
     )
 
     onnx.checker.check_model(str(onnx_path))
     _verify_onnx(
         onnx_path,
-        [classifier_input.numpy()],
+        [dummy_input.numpy()],
         expected_shape=(1, 1),
     )
     print(f"  💾 Saved → {onnx_path}")
-    print(f"  ℹ️  Note: GNN convolution layers run in PyTorch. "
-          f"Only the classifier head is ONNX-exported.")
-
 
 def export_cnn_gnn():
     print("\n[3/5] Exporting CNN-GNN Hybrid...")
@@ -163,7 +163,7 @@ def export_cnn_gnn():
         [dummy_payload.numpy(), dummy_graph.numpy()],
         expected_shape=(1, 1),
     )
-    print(f"  💾 Saved → {onnx_path}")
+    print(f" Saved → {onnx_path}")
 
 
 def export_tssgc():
@@ -173,33 +173,33 @@ def export_tssgc():
     model = _load_checkpoint(SIMSwapDetector(), "tssgc")
     model.eval()
 
-    dummy_device_seq = torch.randn(1, 10, 32)
-    dummy_account    = torch.randn(1, 32)
-    onnx_path        = ONNX_DIR / "tssgc.onnx"
+    SEQ_LEN   = 30
+    dummy_seq  = torch.randn(1, SEQ_LEN, 32)
+    dummy_acct = torch.randn(1, 32)
+    onnx_path  = ONNX_DIR / "tssgc.onnx"
 
     torch.onnx.export(
         model,
-        (dummy_device_seq, dummy_account),
+        (dummy_seq, dummy_acct),
         str(onnx_path),
-        input_names  = ["device_sequence", "account_history"],
-        output_names = ["sim_swap_score"],
-        dynamic_axes = {
-            "device_sequence": {0: "batch_size", 1: "seq_len"},
-            "account_history": {0: "batch_size"},
-            "sim_swap_score":  {0: "batch_size"},
+        input_names   = ["device_sequence", "account_history"],
+        output_names  = ["sim_swap_score"],
+        dynamic_axes  = {
+            "device_sequence":  {0: "batch_size"},
+            "account_history":  {0: "batch_size"},
+            "sim_swap_score":   {0: "batch_size"},
         },
-        opset_version     = 17,
+        opset_version      = 18,
         do_constant_folding= True,
     )
 
     onnx.checker.check_model(str(onnx_path))
     _verify_onnx(
         onnx_path,
-        [dummy_device_seq.numpy(), dummy_account.numpy()],
+        [dummy_seq.numpy(), dummy_acct.numpy()],
         expected_shape=(1, 1),
     )
     print(f"  💾 Saved → {onnx_path}")
-
 
 def export_gan_autoencoder():
     print("\n[5/5] Exporting GAN + Autoencoder (KYC)...")
