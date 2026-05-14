@@ -21,6 +21,11 @@ jobs:
           git init
           git lfs install
           git lfs track "synthetic_data_generator/outputs/**"
+          git lfs track "*.pt"
+          git lfs track "*.onnx"
+          git lfs track "*.data"
+          git lfs track "*.png"
+          git lfs track "*.npy"
           git add .gitattributes
           git config --global user.email "ogunodemarvellous@gmail.com"
           git config --global user.name "teewa56"
