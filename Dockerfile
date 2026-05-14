@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install -y \
 RUN wget -O - https://debian.neo4j.com/neotechnology.gpg.key | gpg --dearmor > /usr/share/keyrings/neo4j.gpg && \
     echo "deb [signed-by=/usr/share/keyrings/neo4j.gpg] https://debian.neo4j.com stable latest" > /etc/apt/sources.list.d/neo4j.list && \
     apt-get update && \
-    apt-get install -y neo4j=1:5.19.0 && \
+    apt-get install -y neo4j=6.2.0 && \
     rm -rf /var/lib/apt/lists/*
 
 # 3. Memory Optimization for Neo4j (Crucial for Hugging Face)
