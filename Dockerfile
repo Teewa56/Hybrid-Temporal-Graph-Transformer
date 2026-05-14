@@ -29,7 +29,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # 5. Copy app code and setup environment
 COPY . .
-RUN mkdir -p logs checkpoints
+RUN mkdir -p logs
 
 # 6. The "Single Container" Startup Script
 RUN echo '#!/bin/bash \n\
