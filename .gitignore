@@ -3,3 +3,17 @@
 venv
 .venv
 *.pem
+
+.git
+.github
+__pycache__
+app/__pycache__
+venv
+*.pyc
+.ipynb_checkpoints
+
+__pycache__/
+    *.py[cod]
+    *$py.class
+    .DS_Store
+    venv/
