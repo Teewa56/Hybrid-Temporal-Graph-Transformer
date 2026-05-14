@@ -1,3 +1,13 @@
+---
+title: Hybrid Temporal Graph Transformer
+emoji: 📈
+colorFrom: blue
+colorTo: indigo
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # Advanced Fraud Detection for African FinTechs
 
 A real-time, AI-powered fraud detection and trust-scoring engine built on top of the **Squad payment API**. Hybrid-Temporal-Graph-Transformer uses a Hybrid Temporal Graph Transformer (TGT) architecture — an ensemble of five specialized deep learning models — to detect, score, and intercept fraudulent transactions before settlement.
