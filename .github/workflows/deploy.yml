@@ -2,7 +2,6 @@ name: Sync to Hugging Face hub
 on:
   push:
     branches: [main]
-  force_push_allowance: true
 
 jobs:
   sync-to-hub:
