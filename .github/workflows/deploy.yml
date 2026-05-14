@@ -19,6 +19,9 @@ jobs:
         run: |
           rm -rf .git
           git init
+          git lfs install
+          git lfs track "synthetic_data_generator/outputs/**"
+          git add .gitattributes
           git config --global user.email "ogunodemarvellous@gmail.com"
           git config --global user.name "teewa56"
           git remote add origin https://Teewa56:${{ secrets.HF_TOKEN }}@huggingface.co/spaces/Teewa56/TGT
