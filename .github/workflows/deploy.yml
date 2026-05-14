@@ -16,12 +16,13 @@ jobs:
       - name: Push to hub
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: 
+        run: |
           rm -rf .git
           git init
-          git remote add origin https://Teewa56:$HF_TOKEN@huggingface.co/spaces/Teewa56/TGT
+          git config --global user.email "ogunodemarvellous@gmail.com"
+          git config --global user.name "teewa56"
+          git remote add origin https://Teewa56:${{ secrets.HF_TOKEN }}@huggingface.co/spaces/Teewa56/TGT
           git checkout -b main
           git add .
-
-          git commit -m "Deploy to Hugging Face hub"
+          git commit -m "Fresh clean deploy"
           git push --force origin main
