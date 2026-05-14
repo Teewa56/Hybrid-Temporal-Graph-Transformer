@@ -9,9 +9,9 @@ RUN apt-get update && apt-get install -y \
 
 # 2. Install Neo4j Community Edition (Modern Debian Method)
 RUN wget -O - https://debian.neo4j.com/neotechnology.gpg.key | gpg --dearmor > /usr/share/keyrings/neo4j.gpg && \
-    echo "deb [signed-by=/usr/share/keyrings/neo4j.gpg] https://debian.neo4j.com stable latest" > /etc/apt/sources.list.d/neo4j.list && \
+    echo "deb [signed-by=/usr/share/keyrings/neo4j.gpg] https://debian.neo4j.com stable 5" > /etc/apt/sources.list.d/neo4j.list && \
     apt-get update && \
-    apt-get install -y neo4j=6.2.0 && \
+    apt-get install -y neo4j && \
     rm -rf /var/lib/apt/lists/*
 
 # 3. Memory Optimization for Neo4j (Crucial for Hugging Face)
