@@ -174,7 +174,7 @@ The TGT system incorporates a **Continual Learning Loop** built on:
 | Graph Database | Neo4j (account relationship store) |
 | In-memory Cache | Redis (sub-ms behavioral lookups) |
 | Model Serving | ONNX (quantized inference) |
-| Infrastructure | AWS |
+| Infrastructure | HuggingFace Spaces |
 | Explainability | SHAP + Attention Weights (CBN compliance) |
 | Payment API | SquadCo API |
 
