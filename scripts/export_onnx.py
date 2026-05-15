@@ -86,24 +86,24 @@ def export_transformer():
         [dummy_input.numpy()],
         expected_shape=(1, 1),
     )
-    print(f"  💾 Saved → {onnx_path}")
+    print(f"   Saved → {onnx_path}")
 
 
 def export_graphsage():
     print("\n[2/5] Exporting GraphSAGE...")
     from app.models.graphsage import GraphSAGEFraudDetector
 
-    # Must match exactly how the model was instantiated in graph_analysis.ipynb
+    
     model = GraphSAGEFraudDetector(
         in_channels=64,
         hidden_channels=128,
-        out_channels=1,      # trained with out_channels=1, direct fraud score
+        out_channels=64, 
         num_layers=3,
     )
     model = _load_checkpoint(model, "graphsage")
     model.eval()
 
-    dummy_input = torch.randn(1, 1)   # out_channels=1 — embedding fed directly to sigmoid
+    dummy_input = torch.randn(1, 64)   # out_channels=64 — embedding fed directly to sigmoid
     onnx_path   = ONNX_DIR / "graphsage.onnx"
 
     classifier = model.classifier
@@ -129,7 +129,7 @@ def export_graphsage():
         [dummy_input.numpy()],
         expected_shape=(1, 1),
     )
-    print(f"  💾 Saved → {onnx_path}")
+    print(f"   Saved → {onnx_path}")
 
 def export_cnn_gnn():
     print("\n[3/5] Exporting CNN-GNN Hybrid...")
@@ -199,7 +199,7 @@ def export_tssgc():
         [dummy_seq.numpy(), dummy_acct.numpy()],
         expected_shape=(1, 1),
     )
-    print(f"  💾 Saved → {onnx_path}")
+    print(f"   Saved → {onnx_path}")
 
 def export_gan_autoencoder():
     print("\n[5/5] Exporting GAN + Autoencoder (KYC)...")
@@ -231,7 +231,7 @@ def export_gan_autoencoder():
         [dummy_kyc.numpy()],
         expected_shape=(1, 1),
     )
-    print(f"  💾 Saved → {onnx_path}")
+    print(f"   Saved → {onnx_path}")
 
 
 def print_summary():

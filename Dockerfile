@@ -34,7 +34,7 @@ RUN mkdir -p logs
 # 6. The "Single Container" Startup Script
 RUN echo '#!/bin/bash \n\
 service redis-server start \n\
-neo4j-admin server set-initial-password Hybrid_Temporal_Graph_Transformer || true \n\
+neo4j-admin dbms set-initial-password Hybrid_Temporal_Graph_Transformer || true \n\
 neo4j start \n\
 echo "Waiting for databases to wake up..." \n\
 sleep 20 \n\
