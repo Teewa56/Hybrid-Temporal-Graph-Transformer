@@ -12,6 +12,7 @@ from app.models.gan_autoencoder import GANAutoencoderKYC
 from app.models.ensemble import ModelEnsemble, EnsembleScores
 
 import os
+import json
 
 CHECKPOINT_DIR = Path(os.getenv("CHECKPOINT_DIR", "checkpoints"))
 
@@ -24,12 +25,7 @@ MODEL_REGISTRY = {
     "gan_autoencoder": (GANAutoencoderKYC,         {},                               "gan_autoencoder.pt"),
 }
 
-
 def _load_model(name: str):
-    """
-    Instantiate a model and load its checkpoint if one exists.
-    Falls back to random weights with a clear warning if no checkpoint is found.
-    """
     model_cls, kwargs, ckpt_filename = MODEL_REGISTRY[name]
     model = model_cls(**kwargs)
     model.eval()
@@ -38,16 +34,43 @@ def _load_model(name: str):
     if ckpt_path.exists():
         try:
             state_dict = torch.load(ckpt_path, map_location="cpu")
+
+            if any(k.startswith("base.") for k in state_dict):
+                state_dict = {
+                    k.replace("base.", "", 1): v
+                    for k, v in state_dict.items()
+                }
+                print(f" {name:<20} stripped wrapper prefix and loaded")
+            else:
+                print(f" {name:<20} loaded from {ckpt_path}")
+
             model.load_state_dict(state_dict)
-            print(f"   {name:<20} loaded from {ckpt_path}")
+
         except Exception as e:
-            print(f"    {name:<20} checkpoint found but failed to load: {e}")
+            print(f" {name:<20} failed to load: {e}")
             print(f"       Running with random weights.")
     else:
-        print(f"    {name:<20} no checkpoint at {ckpt_path} — random weights.")
+        print(f" {name:<20} no checkpoint at {ckpt_path} — random weights.")
 
     return model
 
+def _calibrated_predict(
+    model,
+    sequence: np.ndarray,
+    temperature: float = 1.0,
+    threshold: float = 0.50,
+) -> float:
+    """
+    Run Transformer inference with temperature scaling applied to logits.
+    Returns calibrated probability (not raw sigmoid output).
+    """
+    import torch
+    model.eval()
+    with torch.no_grad():
+        x       = torch.tensor(sequence, dtype=torch.float32).unsqueeze(0)
+        logits, _ = model.base(x)             # raw logits before sigmoid
+        calibrated = torch.sigmoid(logits / temperature)
+    return float(calibrated.item())
 
 class ModelServer:
     """
@@ -89,6 +112,20 @@ class ModelServer:
             for name, (_, _, fname) in MODEL_REGISTRY.items()
         }
 
+        cal_path = CHECKPOINT_DIR / "transformer_calibration.json"
+        if cal_path.exists():
+            with open(cal_path) as f:
+                cal = json.load(f)
+            self.transformer_temperature  = cal["temperature"]         # 0.7138
+            self.transformer_threshold    = cal["optimal_threshold"]   # 0.84
+            print(f"  transformer calibration loaded  "
+                f"(T={self.transformer_temperature:.4f}, "
+                f"threshold={self.transformer_threshold:.2f})")
+        else:
+            self.transformer_temperature  = 1.0
+            self.transformer_threshold    = 0.50
+            print(f" transformer no calibration file — using defaults")
+
         trained   = sum(self._ckpt_status.values())
         untrained = len(self._ckpt_status) - trained
         print(f"\n  {trained}/5 models loaded from checkpoints.")
@@ -125,7 +162,13 @@ class ModelServer:
 
         results = await asyncio.gather(
             loop.run_in_executor(
-                None, self.transformer.predict, sequence_vector
+                None,
+                lambda: _calibrated_predict(
+                    self.transformer,
+                    sequence_vector,
+                    self.transformer_temperature,
+                    self.transformer_threshold,
+                )    
             ),
             loop.run_in_executor(
                 None, self.graphsage.predict_node, node_features, edge_index, target_node_idx

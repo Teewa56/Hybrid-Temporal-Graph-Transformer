@@ -1,0 +1,7 @@
+{
+  "temperature": 0.713823139667511,
+  "optimal_threshold": 0.8400000000000001,
+  "calibrated_auc": 0.9273588954193489,
+  "calibrated_f1": 0.5433526011560693,
+  "brier_score": 0.03336622565984726
+}
