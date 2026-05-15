@@ -31,16 +31,16 @@ async def fetch_transaction(transaction_ref: str) -> dict:
     return response.json().get("data", {})
 
 
-async def fetch_customer_transactions(email: str, limit: int = 50) -> list[dict]:
+async def fetch_customer_transactions(customer_identifier: str) -> list[dict]:
     """
-    Fetch the last N transactions for a customer by email.
+    Fetch the last N transactions for a customer by identifier.
     Used by SequentialService to build the behavioral sequence vector.
     """
     async with httpx.AsyncClient(timeout=10.0) as client:
         response = await client.get(
-            f"{SQUAD_BASE_URL}/transaction/filter",
+            f"{SQUAD_BASE_URL}/virtual-account/customer/transactions/{customer_identifier}",
             headers=HEADERS,
-            params={"email": email, "limit": limit, "sort": "desc"},
+            params={"limit": 50, "sort": "desc"},
         )
     if response.status_code != 200:
         return []
@@ -53,7 +53,7 @@ async def get_transaction(transaction_ref: str):
     return {"transaction_ref": transaction_ref, "data": data}
 
 
-@router.get("/transactions/customer/{email}")
-async def get_customer_transactions(email: str, limit: int = 50):
-    transactions = await fetch_customer_transactions(email, limit)
-    return {"email": email, "count": len(transactions), "transactions": transactions}
+@router.get("/transactions/customer/{customer_identifier}")
+async def get_customer_transactions(customer_identifier: str):
+    transactions = await fetch_customer_transactions(customer_identifier)
+    return {"customer_identifier": customer_identifier, "count": len(transactions), "transactions": transactions}
