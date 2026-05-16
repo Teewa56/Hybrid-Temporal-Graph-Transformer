@@ -1,0 +1,15 @@
+{
+  "optimal_threshold": 0.16000000000000003,
+  "ae_min": 9.692690582596697e-06,
+  "ae_max": 0.0033020703122019768,
+  "ae_weight": 0.85,
+  "disc_weight": 0.15,
+  "normalization": "percentile_based",
+  "ae_min_percentile": 5,
+  "ae_max_percentile": 95,
+  "auc_roc": 0.7999250000000001,
+  "best_f1": 0.6601307189542484,
+  "detection_rate": 0.505,
+  "false_alarm_rate": 0.005,
+  "note": "Autoencoder trained on legit-only. Normalization bounds set by percentiles of val error distributions. Forged docs have 24x higher reconstruction error than legit."
+}

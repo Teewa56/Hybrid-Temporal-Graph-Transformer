@@ -1,0 +1,9 @@
+{
+  "optimal_threshold_f1": 0.05,
+  "optimal_threshold_recall": 0.05,
+  "auc_roc": 0.8992825702699893,
+  "f1_at_best_threshold": 0.875,
+  "f1_at_recall_threshold": 0.875,
+  "precision_at_recall_thresh": 1.0,
+  "recall_at_recall_thresh": 0.7777777777777778
+}
