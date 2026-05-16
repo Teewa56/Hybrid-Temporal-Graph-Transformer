@@ -99,10 +99,10 @@ class TestDecisionEngineDecide:
     @pytest.mark.asyncio
     async def test_green_zone_no_api_call(self, engine, sample_body):
         scores = make_scores(0.30)
-        with patch.object(engine, "_call_squad_dispute_api", new_callable=AsyncMock) as mock_dispute:
+        with patch.object(engine, "_initiate_refund", new_callable=AsyncMock) as mock_refund:
             with patch.object(engine, "_trigger_step_up_auth", new_callable=AsyncMock) as mock_auth:
                 result = await engine.decide("REF001", scores, sample_body, request=None)
-                mock_dispute.assert_not_called()
+                mock_refund.assert_not_called()
                 mock_auth.assert_not_called()
         assert result.zone == FraudZone.GREEN
 
@@ -110,25 +110,25 @@ class TestDecisionEngineDecide:
     async def test_amber_zone_triggers_step_up(self, engine, sample_body):
         scores = make_scores(0.75)
         with patch.object(engine, "_trigger_step_up_auth", new_callable=AsyncMock) as mock_auth:
-            with patch.object(engine, "_call_squad_dispute_api", new_callable=AsyncMock) as mock_dispute:
+            with patch.object(engine, "_initiate_refund", new_callable=AsyncMock) as mock_refund:
                 result = await engine.decide("REF002", scores, sample_body, request=None)
                 mock_auth.assert_called_once()
-                mock_dispute.assert_not_called()
+                mock_refund.assert_not_called()
         assert result.zone == FraudZone.AMBER
 
     @pytest.mark.asyncio
     async def test_red_zone_calls_dispute_api(self, engine, sample_body):
         scores = make_scores(0.95)
-        with patch.object(engine, "_call_squad_dispute_api", new_callable=AsyncMock) as mock_dispute:
+        with patch.object(engine, "_initiate_refund", new_callable=AsyncMock) as mock_refund:
             with patch.object(engine, "_trigger_step_up_auth", new_callable=AsyncMock):
                 result = await engine.decide("REF003", scores, sample_body, request=None)
-                mock_dispute.assert_called_once()
+                mock_refund.assert_called_once()
         assert result.zone == FraudZone.RED
 
     @pytest.mark.asyncio
     async def test_result_has_correct_fields(self, engine, sample_body):
         scores = make_scores(0.30)
-        with patch.object(engine, "_call_squad_dispute_api", new_callable=AsyncMock):
+        with patch.object(engine, "_initiate_refund", new_callable=AsyncMock):
             with patch.object(engine, "_trigger_step_up_auth", new_callable=AsyncMock):
                 result = await engine.decide("REF004", scores, sample_body, request=None)
         assert result.transaction_ref == "REF004"

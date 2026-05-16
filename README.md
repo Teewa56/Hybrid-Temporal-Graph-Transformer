@@ -10,7 +10,7 @@ pinned: false
 
 # Advanced Fraud Detection for African FinTechs
 
-A real-time, AI-powered fraud detection and trust-scoring engine built on top of the **Squad payment API**. Hybrid-Temporal-Graph-Transformer uses a Hybrid Temporal Graph Transformer (TGT) architecture — an ensemble of five specialized deep learning models — to detect, score, and intercept fraudulent transactions before settlement.
+A real-time, AI-powered fraud detection and trust-scoring engine built on top of an integrated payment backend. Hybrid-Temporal-Graph-Transformer uses a Hybrid Temporal Graph Transformer (TGT) architecture — an ensemble of five specialized deep learning models — to detect, score, and intercept fraudulent transactions before settlement.
 
 ---
 
@@ -24,7 +24,7 @@ A real-time, AI-powered fraud detection and trust-scoring engine built on top of
   - [Decision Engine](#decision-engine)
   - [Adaptive Learning](#adaptive-learning)
 - [Tech Stack](#-tech-stack)
-- [Squad API Integration](#-squad-api-integration)
+- [Payment Backend Integration](#-payment-backend-integration)
 - [Getting Started](#-getting-started)
 - [Project Structure](#-project-structure)
 - [Low-Data Strategies](#-low-data-strategies)
@@ -48,14 +48,14 @@ Classical rule-based systems and standard ML models (Random Forest, Logistic Reg
 
 ## 💡 Solution Overview
 
-This is a **Hybrid Temporal Graph Transformer (TGT)** — a real-time AI fraud detection and trust-scoring engine deployed as a closed-loop intelligence layer directly on top of the Squad payment API.
+This is a **Hybrid Temporal Graph Transformer (TGT)** — a real-time AI fraud detection and trust-scoring engine deployed as a closed-loop intelligence layer directly on top of an integrated payment backend.
 
 Rather than a single model making a single guess, the TGT is an **ensemble of five specialized deep learning sub-architectures**, each purpose-built for a specific fraud surface, running in parallel and feeding a unified Decision Engine that produces a single, interpretable trust score for every transaction.
 
 **Key outcomes:**
 -  Sub-200ms inference latency — fraud check completes before the user sees "Processing"
 -  Unified Fraud Score (0–1) with three-zone routing: Green / Amber / Red
--  Automatic Squad Dispute API call on Red Zone detections — funds frozen before settlement
+-  Automatic backend refund request on Red Zone detections — high-risk transactions are escalated immediately
 -  SHAP-based explainability on every blocked transaction for CBN compliance
 -  Continual learning loop — the model gets sharper with every new fraud attempt
 
@@ -105,43 +105,43 @@ A **GAN** is trained to understand how fraudulent IDs are synthesized, learning 
 User Transaction
       │
       ▼
- Squad Webhook  ───────────────────────────────────────────────────┐
- (transaction.success / transfer.initiated)                        │
-      │                                                            │
-      ▼                                                            │
-  Redis Cache (sub-ms retrieval)                                   │
-      │                                                            │
-      ├──────────────────┬─────────────────────────────────────┐   │
-      ▼                  ▼                                     │   │
-Sequential Service   Graph Service                             │   │
-(last 50 txns →     (live transaction                          │   │
- sequence vector)    graph: accounts,                          │   │
-                     devices, IPs)                             │   │
-      │                   │                                    │   │
-      └────────┬──────────┘                                    │   │
-               ▼                                               │   │
-     ┌─────────────────────────────────┐                       │   │
-     │     TGT Model Ensemble          │                       │   │
-     │  (All 5 models run in parallel) │                       │   │
-     │                                 │                       │   │
-     │  Transformer ──► Risk Score     │                       │   │
-     │  GraphSAGE   ──► Risk Score     │                       │   │
-     │  CNN-GNN     ──► Risk Score     │                       │   │
-     │  TSSGC       ──► Risk Score     │                       │   │
-     │  GAN Disc.   ──► Risk Score     │                       │   │
-     └──────────────┬──────────────────┘                       │   │
-                    ▼                                          │   │
-           Decision Engine                                     │   │
-           (Weighted Average)                                  │   │
-                    │                                          │   │
-        ┌───────────┼────────────────┐                         │   │
-        ▼           ▼                ▼                         │   │
-  Green (<0.65) Amber (0.65-0.89) Red (≥0.90)                  │   │
-  Proceed       Step-up Auth      Squad Dispute API ───────────┘   │
-                (Face ID / OTP)   Freeze funds                     │
-                                                                   │
-                                  ◄────────────────────────────────┘
-                              Squad API handles execution
+ Payment Backend Webhook  ───────────────────────────────────────────────┐
+ (charge_successful / transaction.completed)                             │
+      │                                                                  │
+      ▼                                                                  │
+  Redis Cache (sub-ms retrieval)                                         │
+      │                                                                  │
+      ├──────────────────┬─────────────────────────────────────┐         │
+      ▼                  ▼                                     │         │
+Sequential Service   Graph Service                             │         │
+(last 50 txns →     (live transaction                          │         │
+ sequence vector)    graph: accounts,                          │         │
+                     devices, IPs)                             │         │
+      │                   │                                    │         │
+      └────────┬──────────┘                                    │         │
+               ▼                                               │         │
+     ┌─────────────────────────────────┐                       │         │
+     │     TGT Model Ensemble          │                       │         │
+     │  (All 5 models run in parallel) │                       │         │
+     │                                 │                       │         │
+     │  Transformer ──► Risk Score     │                       │         │
+     │  GraphSAGE   ──► Risk Score     │                       │         │
+     │  CNN-GNN     ──► Risk Score     │                       │         │
+     │  TSSGC       ──► Risk Score     │                       │         │
+     │  GAN Disc.   ──► Risk Score     │                       │         │
+     └──────────────┬──────────────────┘                       │         │
+                    ▼                                          │         │
+           Decision Engine                                     │         │
+           (Weighted Average)                                  │         │
+                    │                                          │         │
+        ┌───────────┼────────────────┐                         │         │
+        ▼           ▼                ▼                         │         │
+  Green (<0.65) Amber (0.65-0.89) Red (≥0.90)                  │         │
+  Proceed       Step-up Auth      Backend refund requested     ┘         │
+                (Face ID / OTP)   for high-risk transactions             │
+                                                                         │
+                          ◄──────────────────────────────────────────────┘
+                              Integrated backend handles execution
 ```
 
 ---
@@ -153,8 +153,8 @@ A weighted average of all five risk scores produces a **Unified Fraud Score**. R
 | Zone | Score Range | Action |
 |---|---|---|
 | 🟢 Green | < 0.65 | Transaction proceeds normally |
-| 🟡 Amber | 0.65 – 0.89 | Step-up authentication triggered (Face ID or OTP). Squad settlement held pending re-verification |
-| 🔴 Red | ≥ 0.90 | Squad Dispute/Reverse API called automatically. Funds frozen in virtual account before merchant settlement |
+| 🟡 Amber | 0.65 – 0.89 | Step-up authentication triggered (Face ID or OTP). Backend settlement held pending re-verification |
+| 🔴 Red | ≥ 0.90 | Backend refund request submitted automatically. High-risk transactions are escalated for reversal |
 
 To achieve **sub-200ms inference** — the hard latency ceiling for payment systems — all models are compressed using **ONNX / TensorRT model quantization**.
 
@@ -186,35 +186,35 @@ The TGT system incorporates a **Continual Learning Loop** built on:
 | Model Serving | ONNX (quantized inference) |
 | Infrastructure | HuggingFace Spaces |
 | Explainability | SHAP + Attention Weights (CBN compliance) |
-| Payment API | SquadCo API |
+| Payment API | Integrated NeoBank API |
 
 ---
 
-## 🔌 Squad API Integration
+## 🔌 Payment Backend Integration
 
-Squad API is not peripheral to this system — it is **the execution layer**. The integration is deep and bidirectional:
+This system is integrated with your payment backend — the NeoBank API — rather than a third-party payment marketplace. The app receives signed webhook events from the backend, scores transactions in real time, and calls backend refund APIs when needed.
 
 **Inbound (Trigger):**
 ```
-POST /squad/webhook
-Events: transaction.success | transfer.initiated | payment_link.paid
+POST /webhook
+Events: charge_successful | transaction.completed | payment_link.paid
 ```
 Every transaction event fires a webhook that initiates the fraud detection pipeline.
 
 **Outbound (Response):**
 ```
-POST /squad/dispute          → Freeze funds on Red Zone detection
-POST /squad/transfer/reverse → Reverse settled transactions flagged post-hoc
-GET  /squad/transaction/{id} → Retrieve transaction details for feature engineering
+POST /dispute/refund          → Request refund for high-risk transactions
+GET  /transactions/transaction/{transaction_ref} → Retrieve transaction details for feature engineering
+GET  /transactions/customer/{customer_identifier} → Fetch transaction history for a customer
 ```
 
-**Feature inputs from Squad payload:**
+**Feature inputs from payment payload:**
 - `amount`, `currency`, `transaction_ref`
 - `customer_email`, `customer_name`
-- `ip_address`, `device_metadata`
-- `merchant_id`, `payment_link_ref`
+- `ip_address`, `device_id`
+- `merchant_category`, `channel`, `created_at`
 
-Squad settlement is **held programmatically** during Amber Zone step-up authentication, ensuring funds are not released to merchants until identity is re-verified.
+The backend is responsible for transaction execution and refund handling, while TGT focuses on detection, scoring, and escalation.
 
 ---
 
@@ -227,7 +227,7 @@ Python 3.10+
 Redis (running locally or via Docker)
 Neo4j 5.x
 Node.js 18+ (for webhook listener)
-Squad API credentials (test environment)
+NeoBank API credentials (test environment)
 ```
 
 ### Installation
@@ -246,7 +246,7 @@ pip install -r requirements.txt
 
 # Set up environment variables
 cp .env.example .env
-# Fill in: SQUAD_SECRET_KEY, SQUAD_BASE_URL, NEO4J_URI, REDIS_URL
+# Fill in: NEOBANK_SECRET_KEY, NEOBANK_BASE_URL, NEOBANK_WEBHOOK_SECRET, NEO4J_URI, REDIS_URL
 ```
 
 ### Running the System
@@ -256,8 +256,9 @@ Check [HERE](./run_project.md)
 ### Environment Variables
 
 ```env
-SQUAD_SECRET_KEY=your_squad_secret_key
-SQUAD_BASE_URL=https://sandbox-api-d.squadco.com
+NEOBANK_SECRET_KEY=your_neobank_secret_key
+NEOBANK_BASE_URL=https://sandbox-api-d.neobankco.com
+NEOBANK_WEBHOOK_SECRET=your_webhook_signing_secret
 NEO4J_URI=bolt://localhost:7687
 NEO4J_USER=neo4j
 NEO4J_PASSWORD=your_password
@@ -275,8 +276,8 @@ Hybrid-Temporal-Graph-Transformer/
 ├── app/
 │   ├── main.py                    # FastAPI entrypoint
 │   ├── api/
-│   │   ├── webhooks.py            # Squad webhook receiver
-│   │   ├── disputes.py            # Squad Dispute API caller
+│   │   ├── webhooks.py            # Integrated backend webhook receiver
+│   │   ├── disputes.py            # Backend refund API caller
 │   │   └── transactions.py        # Transaction data fetcher
 │   ├── models/
 │   │   ├── transformer.py         # Behavioral Transformer model
@@ -305,7 +306,7 @@ Hybrid-Temporal-Graph-Transformer/
 │   └── preprocessing/             # Feature engineering scripts
 ├── tests/
 │   ├── test_models.py
-│   ├── test_integration.py        # Squad API integration tests
+│   ├── test_integration.py        # Backend integration tests
 │   └── test_decision_engine.py
 ├── notebooks/
 │   ├── model_training.ipynb
@@ -331,7 +332,7 @@ Hybrid-Temporal-Graph-Transformer/
 │   │   ├── __init__.py
 │   │   ├── legitimate_payload_generator.py
 │   │   ├── payload_anomaly_injector.py
-│   │   └── squad_payload_schema.py
+│   │   └── payment_payload_schema.py
 │   │
 │   ├── sim_swap/
 │   │   ├── __init__.py
@@ -361,7 +362,7 @@ Hybrid-Temporal-Graph-Transformer/
 |---|---|---|
 | Transformer | PaySim + IEEE-CIS | VAE-generated sequences |
 | GraphSAGE | Elliptic + PaySim graph | Barabási–Albert synthetic graphs |
-| CNN-GNN | UNSW-NB15 + Squad sandbox payloads | Programmatic anomaly injection |
+| CNN-GNN | UNSW-NB15 + synthetic payment payloads | Programmatic anomaly injection |
 | TSSGC | Synthetic simulation | GSMA-calibrated generators |
 | GAN + Autoencoder | FantasyID | Self-generated GAN forgeries |
 

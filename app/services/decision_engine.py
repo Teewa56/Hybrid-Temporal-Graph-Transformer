@@ -10,8 +10,8 @@ from app.models.ensemble import EnsembleScores
 if TYPE_CHECKING:
     from fastapi import Request
 
-SQUAD_BASE_URL = os.getenv("SQUAD_BASE_URL", "https://sandbox-api-d.squadco.com")
-SQUAD_SECRET_KEY = os.getenv("SQUAD_SECRET_KEY", "")
+NEOBANK_BASE_URL = os.getenv("NEOBANK_BASE_URL", "https://api.neobank.example")
+NEOBANK_SECRET_KEY = os.getenv("NEOBANK_SECRET_KEY", "")
 
 GREEN_THRESHOLD = float(os.getenv("GREEN_THRESHOLD", "0.65"))
 RED_THRESHOLD = float(os.getenv("RED_THRESHOLD", "0.90"))
@@ -39,10 +39,10 @@ class DecisionEngine:
 
     GREEN  (<0.65): Transaction proceeds normally.
     AMBER (0.65–0.89): Flagged for manual review. Step-up auth triggered (TODO: OTP/FaceID middleware).
-    RED   (>=0.90): Attempts a full refund via Squad's Refund API post-settlement.
+    RED   (>=0.90): Attempts a full refund via the backend refund API post-settlement.
 
-    IMPORTANT — Squad API constraint:
-    Squad does not expose a merchant-side freeze or hold API. TGT detects fraud after
+    IMPORTANT — backend integration constraint:
+    The backend does not expose a merchant-side freeze or hold API. TGT detects fraud after
     the 'charge_successful' webhook fires, meaning the transaction has already succeeded.
     The Red Zone action is a best-effort full refund. The gateway_ref required by the
     Refund API is extracted from the normalised webhook body (Body.gateway_ref).
@@ -73,20 +73,20 @@ class DecisionEngine:
         reason: str,
     ) -> dict:
         """
-        Call Squad's Refund API to reverse a fraudulent transaction post-settlement.
+        Call the backend refund API to reverse a fraudulent transaction post-settlement.
         Requires gateway_ref from the webhook body — without it, the refund cannot proceed.
         """
         if not gateway_ref:
             print(
                 f"  RED ZONE [{transaction_ref}]: No gateway_ref available — "
-                f"refund cannot be submitted to Squad. Transaction flagged for manual review."
+                f"refund cannot be submitted to the backend. Transaction flagged for manual review."
             )
             return {"status": "skipped", "reason": "gateway_ref missing"}
 
         try:
             async with httpx.AsyncClient(timeout=10.0) as client:
                 response = await client.post(
-                    f"{SQUAD_BASE_URL}/transaction/refund",
+                    f"{NEOBANK_BASE_URL}/transaction/refund",
                     json={
                         "gateway_transaction_ref": gateway_ref,
                         "transaction_ref": transaction_ref,
@@ -94,7 +94,7 @@ class DecisionEngine:
                         "reason_for_refund": reason,
                     },
                     headers={
-                        "Authorization": f"Bearer {SQUAD_SECRET_KEY}",
+                        "Authorization": f"Bearer {NEOBANK_SECRET_KEY}",
                         "Content-Type": "application/json",
                     },
                 )

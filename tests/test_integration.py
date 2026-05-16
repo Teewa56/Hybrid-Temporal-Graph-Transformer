@@ -15,7 +15,7 @@ from app.main import app
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
-SQUAD_TEST_SECRET = os.getenv("SQUAD_WEBHOOK_SECRET")
+WEBHOOK_TEST_SECRET = os.getenv("WEBHOOK_SECRET", "testsecret")
 
 SAMPLE_WEBHOOK_PAYLOAD = {
     "Event": "transaction.success",
@@ -87,11 +87,11 @@ class TestWebhookEndpoint:
 
     def test_ignores_unknown_events(self):
         _mock_app_state()
-        with patch("app.api.webhooks.SQUAD_SECRET", ""):
+        with patch("app.api.webhooks.WEBHOOK_SECRET", ""):
             client = TestClient(app)
             payload = {**SAMPLE_WEBHOOK_PAYLOAD, "Event": "refund.completed"}
             response = client.post(
-                "/squad/webhook",
+                "/webhook",
                 json=payload,
                 headers={"Content-Type": "application/json"},
             )
@@ -102,11 +102,11 @@ class TestWebhookEndpoint:
         """Webhook must return 200 immediately — pipeline runs in background."""
         _mock_app_state()
 
-        with patch("app.api.webhooks.SQUAD_SECRET", ""), \
+        with patch("app.api.webhooks.WEBHOOK_SECRET", ""), \
              patch("app.api.webhooks._run_fraud_pipeline", new_callable=AsyncMock):
             client = TestClient(app)
             response = client.post(
-                "/squad/webhook",
+                "/webhook",
                 json=SAMPLE_WEBHOOK_PAYLOAD,
                 headers={"Content-Type": "application/json"},
             )
@@ -116,14 +116,14 @@ class TestWebhookEndpoint:
 
     def test_rejects_invalid_signature(self):
         _mock_app_state()
-        with patch("app.api.webhooks.SQUAD_SECRET", SQUAD_TEST_SECRET):
+        with patch("app.api.webhooks.WEBHOOK_SECRET", WEBHOOK_TEST_SECRET):
             client = TestClient(app)
             response = client.post(
-                "/squad/webhook",
+                "/webhook",
                 json=SAMPLE_WEBHOOK_PAYLOAD,
                 headers={
                     "Content-Type": "application/json",
-                    "x-squad-encrypted-body": "invalid_signature",
+                    "x-webhook-signature": "invalid_signature",
                 },
             )
         assert response.status_code == 401
@@ -132,28 +132,28 @@ class TestWebhookEndpoint:
         _mock_app_state()
         payload_bytes = json.dumps(SAMPLE_WEBHOOK_PAYLOAD).encode()
         signature = hmac.new(
-            SQUAD_TEST_SECRET.encode(), payload_bytes, hashlib.sha512
+            WEBHOOK_TEST_SECRET.encode(), payload_bytes, hashlib.sha512
         ).hexdigest()
 
-        with patch("app.api.webhooks.SQUAD_SECRET", SQUAD_TEST_SECRET), \
+        with patch("app.api.webhooks.WEBHOOK_SECRET", WEBHOOK_TEST_SECRET), \
              patch("app.api.webhooks._run_fraud_pipeline", new_callable=AsyncMock):
             client = TestClient(app)
             response = client.post(
-                "/squad/webhook",
+                "/webhook",
                 content=payload_bytes,
                 headers={
                     "Content-Type": "application/json",
-                    "x-squad-encrypted-body": signature,
+                    "x-webhook-signature": signature,
                 },
             )
         assert response.status_code == 200
 
     def test_rejects_malformed_json(self):
         _mock_app_state()
-        with patch("app.api.webhooks.SQUAD_SECRET", ""):
+        with patch("app.api.webhooks.WEBHOOK_SECRET", ""):
             client = TestClient(app)
             response = client.post(
-                "/squad/webhook",
+                "/webhook",
                 content=b"not valid json {{{",
                 headers={"Content-Type": "application/json"},
             )
@@ -165,7 +165,7 @@ class TestWebhookEndpoint:
 class TestDisputeEndpoint:
 
     @pytest.mark.asyncio
-    async def test_raise_dispute_calls_squad(self):
+    async def test_raise_dispute_calls_backend(self):
         _mock_app_state()
 
         mock_response = MagicMock()
@@ -182,7 +182,7 @@ class TestDisputeEndpoint:
                 base_url="http://test"
             ) as ac:
                 response = await ac.post(
-                    "/squad/dispute",
+                    "/dispute/refund",
                     json={
                         "transaction_ref": "TESTREF000001",
                         "reason": "Fraud detected",
@@ -191,11 +191,11 @@ class TestDisputeEndpoint:
 
         assert response.status_code == 200
         data = response.json()
-        assert data["status"] == "dispute_raised"
+        assert data["status"] == "refund_initiated"
         assert data["transaction_ref"] == "TESTREF000001"
 
     @pytest.mark.asyncio
-    async def test_reverse_transaction(self):
+    async def test_refund_transaction(self):
         _mock_app_state()
 
         mock_response = MagicMock()
@@ -211,12 +211,12 @@ class TestDisputeEndpoint:
                 base_url="http://test"
             ) as ac:
                 response = await ac.post(
-                    "/squad/reverse",
+                    "/dispute/refund",
                     json={"transaction_ref": "TESTREF000001"},
                 )
 
         assert response.status_code == 200
-        assert response.json()["status"] == "reversed"
+        assert response.json()["status"] == "refund_initiated"
 
 
 # ── Synthetic Data Pipeline Integration ───────────────────────────────────────
@@ -243,9 +243,9 @@ class TestSyntheticDataPipeline:
 
     def test_payload_pipeline_runs(self):
         from synthetic_data_generator.payload import (
-            LegitimatePayloadGenerator, PayloadAnomalyInjector, SquadPayloadSchema
+            LegitimatePayloadGenerator, PayloadAnomalyInjector, PaymentPayloadSchema
         )
-        schema   = SquadPayloadSchema()
+        schema   = PaymentPayloadSchema()
         gen      = LegitimatePayloadGenerator(seed=42)
         payloads = gen.generate_batch(n=20)
         assert len(payloads) == 20

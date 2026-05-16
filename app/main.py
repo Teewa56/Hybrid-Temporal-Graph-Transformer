@@ -56,21 +56,9 @@ async def add_latency_header(request: Request, call_next):
     return response
 
 
-def verify_squad_signature(payload: bytes, signature: str, secret: str) -> bool:
-    """
-    Utility for card/payment webhooks.
-    Squad sends the HMAC-SHA512 hex digest uppercased in x-squad-encrypted-body.
-    Must compare uppercase to uppercase.
-    """
-    expected = hmac.new(
-        secret.encode(), payload, hashlib.sha512
-    ).hexdigest().upper()                    # ← uppercase — was missing before
-    return hmac.compare_digest(expected, (signature or "").upper())
-
-
-app.include_router(webhooks.router, prefix="/squad", tags=["Webhooks"])
-app.include_router(disputes.router, prefix="/squad", tags=["Disputes & Refunds"])
-app.include_router(transactions.router, prefix="/squad", tags=["Transactions"])
+app.include_router(webhooks.router, prefix="/webhook", tags=["Webhooks"])
+app.include_router(disputes.router, prefix="/dispute", tags=["Disputes & Refunds"])
+app.include_router(transactions.router, prefix="/transactions", tags=["Transactions"])
 
 
 @app.get("/health")

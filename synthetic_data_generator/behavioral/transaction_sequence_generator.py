@@ -48,7 +48,7 @@ def _build_transaction(
         "transaction_ref": str(uuid.uuid4()).replace("-", "")[:12].upper(),
         "user_id": user.user_id,
         "customer_email": user.email,
-        "amount": int(amount * 100),           # Kobo, like Squad API
+        "amount": int(amount * 100),           # Kobo, matching the backend amount unit
         "currency": "NGN",
         "merchant_category": merchant,
         "recipient_id": recipient,

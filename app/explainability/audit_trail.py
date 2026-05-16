@@ -40,7 +40,7 @@ class AuditTrail:
     Every Red and Amber Zone decision is logged with:
     - Full score breakdown per model
     - Top contributing SHAP features
-    - Action taken and Squad API response
+    - Action taken and backend response
     - Immutable timestamp and model version
 
     Logs are written as newline-delimited JSON (JSONL)

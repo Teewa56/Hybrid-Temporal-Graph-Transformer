@@ -33,7 +33,7 @@ def _extract_node_features(account_data: dict) -> np.ndarray:
 
 def _resolve_email(body: dict) -> str:
     """
-    Card webhooks: 'customer_email' (normalised from Squad's 'email').
+    Card webhooks: 'customer_email' (normalised from upstream payment webhook email).
     VA webhooks: no email — use customer_identifier as graph node key instead.
     """
     return (
@@ -69,7 +69,7 @@ class GraphService:
     async def _neo4j_update_and_fetch(self, body: dict) -> dict:
         sender_key = _resolve_email(body)
 
-        # ip_address and device_id are not sent by Squad — default gracefully
+        # ip_address and device_id are optional from the upstream webhook — default gracefully
         device_id = body.get("device_id") or "unknown-device"
         ip_address = body.get("ip_address") or "0.0.0.0"
 
@@ -127,7 +127,7 @@ class GraphService:
         features = [
             float(body.get("amount", 0)) / 10_000_000.0,
             float(len(txn_ref) >= 10),
-            # ip_address absent in Squad webhooks — encode as 0
+            # ip_address may be missing in webhook payloads — encode as 0
             float(bool(body.get("ip_address", ""))),
             float(bool(body.get("device_id", ""))),
             float(bool(body.get("customer_email", "") or body.get("customer_identifier", ""))),

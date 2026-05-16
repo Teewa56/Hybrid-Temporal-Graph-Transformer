@@ -3,10 +3,10 @@ import random
 from datetime import datetime, timedelta
 
 from synthetic_data_generator.config import CONFIG, NIGERIAN_CARRIERS
-from synthetic_data_generator.payload.squad_payload_schema import SquadPayloadSchema
+from synthetic_data_generator.payload.payment_payload_schema import PaymentPayloadSchema
 
 
-SCHEMA = SquadPayloadSchema()
+SCHEMA = PaymentPayloadSchema()
 
 NIGERIAN_NAMES = [
     "Amaka Okonkwo", "Emeka Eze", "Fatima Bello", "Tunde Adeyemi",
@@ -37,7 +37,7 @@ def _random_email() -> str:
 
 class LegitimatePayloadGenerator:
     """
-    Generates syntactically and semantically valid Squad API payloads.
+    Generates syntactically and semantically valid payment backend payloads.
     Uses realistic Nigerian phone numbers, emails, bank account numbers,
     and transaction references. Forms the negative (non-fraud) class
     for CNN-GNN training.

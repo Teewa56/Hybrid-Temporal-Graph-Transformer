@@ -6,15 +6,15 @@ from datetime import datetime, timedelta
 from typing import Optional
 
 from synthetic_data_generator.config import CONFIG
-from synthetic_data_generator.payload.squad_payload_schema import SquadPayloadSchema
+from synthetic_data_generator.payload.payment_payload_schema import PaymentPayloadSchema
 
 
-SCHEMA = SquadPayloadSchema()
+SCHEMA = PaymentPayloadSchema()
 
 
 class PayloadAnomalyInjector:
     """
-    Takes legitimate Squad API payloads and injects labeled anomalies.
+    Takes legitimate payment payloads and injects labeled anomalies.
     Each anomaly type maps to a real payment injection attack pattern.
     """
 
@@ -83,7 +83,7 @@ class PayloadAnomalyInjector:
             future = datetime.utcnow() + timedelta(days=random.randint(1, 365))
             p["created_at"] = future.isoformat() + "Z"
         elif choice == 1:
-            # Before Squad existed
+            # Before this backend existed
             past = datetime(2015, 1, 1)
             p["created_at"] = past.isoformat() + "Z"
         else:

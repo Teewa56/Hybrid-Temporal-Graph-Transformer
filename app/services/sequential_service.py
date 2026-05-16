@@ -31,7 +31,7 @@ def _encode_merchant_category(category: str) -> list[float]:
     return vec
 
 
-# Squad card webhook transaction_type values
+# Card webhook transaction_type values from the integrated backend
 _CARD_TX_TYPES = {"card", "transfer", "bank", "ussd", "merchantussd", "virtualaccount"}
 
 
@@ -39,8 +39,8 @@ def _transaction_to_vector(txn: dict) -> np.ndarray:
     """
     Convert a single transaction dict to a fixed-size feature vector.
     Handles two formats:
-      1. Squad card/transfer webhook body fields
-      2. Squad virtual account transaction list fields
+      1. card/transfer webhook body fields
+      2. virtual account transaction list fields
     Output shape: (FEATURE_DIM,)
     """
     from datetime import datetime
@@ -104,7 +104,7 @@ def _transaction_to_vector(txn: dict) -> np.ndarray:
 class SequentialService:
     """
     Builds the behavioral sequence vector for the Transformer model.
-    Pulls the user's last 50 transactions from Redis cache or Squad API.
+    Pulls the user's last 50 transactions from Redis cache or the integrated payment backend.
     Handles both card-payment transactions and virtual-account transactions.
     """
 

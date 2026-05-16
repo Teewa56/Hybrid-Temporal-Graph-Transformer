@@ -3,9 +3,9 @@ from typing import Any
 
 
 @dataclass
-class SquadPayloadSchema:
+class PaymentPayloadSchema:
     """
-    Defines the exact Squad API transaction payload schema.
+    Defines the exact payment payload schema.
     Ground truth for what a legitimate payload looks like.
     All generators reference this to ensure structural consistency.
     """

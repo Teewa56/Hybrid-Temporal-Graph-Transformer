@@ -7,7 +7,7 @@ Before anything else, make sure you have these installed:
 python --version        # 3.10+
 docker --version        # any recent version
 pip install -r requirements.txt
-cp .env.example .env    # fill in your Squad API keys
+cp .env.example .env    # fill in your NeoBank API keys
 ```
 
 ---
@@ -174,7 +174,7 @@ pytest tests/ -v
 
 # Individual files
 pytest tests/test_models.py -v           # model architecture tests
-pytest tests/test_decision_engine.py -v  # zone routing and Squad API tests
+pytest tests/test_decision_engine.py -v  # zone routing and backend integration tests
 pytest tests/test_integration.py -v      # webhook and end-to-end tests
 ```
 
