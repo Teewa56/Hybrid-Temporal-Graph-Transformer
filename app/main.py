@@ -24,16 +24,16 @@ async def lifespan(app: FastAPI):
 
     app.state.drift_detector = DriftDetector()
 
-    print("online — all models loaded, cache connected.")
+    print("TGT online — all models loaded, cache connected.")
     yield
 
     # Shutdown
     await app.state.cache.disconnect()
-    print("shutting down.")
+    print("TGT shutting down.")
 
 
 app = FastAPI(
-    title="— Fraud Detection Engine",
+    title="TGT — Fraud Detection Engine",
     description="Hybrid Temporal Graph Transformer fraud detection layer for African FinTechs.",
     version="1.0.0",
     lifespan=lifespan,
@@ -57,14 +57,19 @@ async def add_latency_header(request: Request, call_next):
 
 
 def verify_squad_signature(payload: bytes, signature: str, secret: str) -> bool:
+    """
+    Utility for card/payment webhooks.
+    Squad sends the HMAC-SHA512 hex digest uppercased in x-squad-encrypted-body.
+    Must compare uppercase to uppercase.
+    """
     expected = hmac.new(
         secret.encode(), payload, hashlib.sha512
-    ).hexdigest()
-    return hmac.compare_digest(expected, signature)
+    ).hexdigest().upper()                    # ← uppercase — was missing before
+    return hmac.compare_digest(expected, (signature or "").upper())
 
 
 app.include_router(webhooks.router, prefix="/squad", tags=["Webhooks"])
-app.include_router(disputes.router, prefix="/squad", tags=["Disputes"])
+app.include_router(disputes.router, prefix="/squad", tags=["Disputes & Refunds"])
 app.include_router(transactions.router, prefix="/squad", tags=["Transactions"])
 
 

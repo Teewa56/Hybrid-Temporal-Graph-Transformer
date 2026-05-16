@@ -31,20 +31,27 @@ async def fetch_transaction(transaction_ref: str) -> dict:
     return response.json().get("data", {})
 
 
-async def fetch_customer_transactions(customer_identifier: str) -> list[dict]:
+async def fetch_customer_transactions(customer_identifier: str, limit: int = 50) -> list[dict]:
     """
-    Fetch the last N transactions for a customer by identifier.
-    Used by SequentialService to build the behavioral sequence vector.
+    Fetch transactions for a customer by their customer_identifier.
+    Uses the virtual account customer transactions endpoint.
+
     """
     async with httpx.AsyncClient(timeout=10.0) as client:
         response = await client.get(
             f"{SQUAD_BASE_URL}/virtual-account/customer/transactions/{customer_identifier}",
             headers=HEADERS,
-            params={"limit": 50, "sort": "desc"},
         )
     if response.status_code != 200:
         return []
-    return response.json().get("data", {}).get("transactions", [])
+
+    # 'data' is a direct list — not a nested dict with a 'transactions' key
+    transactions = response.json().get("data", [])
+    if not isinstance(transactions, list):
+        return []
+
+    # Most recent first; Squad returns chronological by default
+    return transactions[-limit:]
 
 
 @router.get("/transaction/{transaction_ref}")
@@ -54,6 +61,10 @@ async def get_transaction(transaction_ref: str):
 
 
 @router.get("/transactions/customer/{customer_identifier}")
-async def get_customer_transactions(customer_identifier: str):
-    transactions = await fetch_customer_transactions(customer_identifier)
-    return {"customer_identifier": customer_identifier, "count": len(transactions), "transactions": transactions}
+async def get_customer_transactions(customer_identifier: str, limit: int = 50):
+    transactions = await fetch_customer_transactions(customer_identifier, limit=limit)
+    return {
+        "customer_identifier": customer_identifier,
+        "count": len(transactions),
+        "transactions": transactions,
+    }

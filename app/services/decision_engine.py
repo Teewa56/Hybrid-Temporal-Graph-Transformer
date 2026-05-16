@@ -13,8 +13,8 @@ if TYPE_CHECKING:
 SQUAD_BASE_URL = os.getenv("SQUAD_BASE_URL", "https://sandbox-api-d.squadco.com")
 SQUAD_SECRET_KEY = os.getenv("SQUAD_SECRET_KEY", "")
 
-GREEN_THRESHOLD = 0.65
-RED_THRESHOLD = 0.90
+GREEN_THRESHOLD = float(os.getenv("GREEN_THRESHOLD", "0.65"))
+RED_THRESHOLD = float(os.getenv("RED_THRESHOLD", "0.90"))
 
 
 class FraudZone(str, Enum):
@@ -35,10 +35,17 @@ class DecisionResult:
 
 class DecisionEngine:
     """
-    Converts EnsembleScores into a routing decision and takes action:
-    - GREEN  (<0.65): Transaction proceeds.
-    - AMBER (0.65-0.89): Step-up authentication triggered. Settlement held.
-    - RED   (>=0.90): Squad Dispute API called. Funds frozen immediately.
+    Converts EnsembleScores into a routing decision and takes action.
+
+    GREEN  (<0.65): Transaction proceeds normally.
+    AMBER (0.65–0.89): Flagged for manual review. Step-up auth triggered (TODO: OTP/FaceID middleware).
+    RED   (>=0.90): Attempts a full refund via Squad's Refund API post-settlement.
+
+    IMPORTANT — Squad API constraint:
+    Squad does not expose a merchant-side freeze or hold API. TGT detects fraud after
+    the 'charge_successful' webhook fires, meaning the transaction has already succeeded.
+    The Red Zone action is a best-effort full refund. The gateway_ref required by the
+    Refund API is extracted from the normalised webhook body (Body.gateway_ref).
     """
 
     def _determine_zone(self, score: float) -> FraudZone:
@@ -49,7 +56,6 @@ class DecisionEngine:
         return FraudZone.RED
 
     def _identify_top_signals(self, scores: EnsembleScores) -> list[str]:
-        """Return the model names firing above 0.70, sorted by score."""
         signal_map = {
             "Behavioral anomaly (Transformer)": scores.transformer_score,
             "Mule network detected (GraphSAGE)": scores.graphsage_score,
@@ -60,24 +66,52 @@ class DecisionEngine:
         firing = {k: v for k, v in signal_map.items() if v >= 0.70}
         return sorted(firing, key=lambda k: firing[k], reverse=True)
 
-    async def _call_squad_dispute_api(self, transaction_ref: str, reason: str):
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            await client.post(
-                f"{SQUAD_BASE_URL}/dispute/transaction/raise-dispute",
-                json={"transaction_ref": transaction_ref, "reason": reason},
-                headers={
-                    "Authorization": f"Bearer {SQUAD_SECRET_KEY}",
-                    "Content-Type": "application/json",
-                },
+    async def _initiate_refund(
+        self,
+        transaction_ref: str,
+        gateway_ref: str,
+        reason: str,
+    ) -> dict:
+        """
+        Call Squad's Refund API to reverse a fraudulent transaction post-settlement.
+        Requires gateway_ref from the webhook body — without it, the refund cannot proceed.
+        """
+        if not gateway_ref:
+            print(
+                f"  RED ZONE [{transaction_ref}]: No gateway_ref available — "
+                f"refund cannot be submitted to Squad. Transaction flagged for manual review."
             )
+            return {"status": "skipped", "reason": "gateway_ref missing"}
+
+        try:
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                response = await client.post(
+                    f"{SQUAD_BASE_URL}/transaction/refund",
+                    json={
+                        "gateway_transaction_ref": gateway_ref,
+                        "transaction_ref": transaction_ref,
+                        "refund_type": "Full",
+                        "reason_for_refund": reason,
+                    },
+                    headers={
+                        "Authorization": f"Bearer {SQUAD_SECRET_KEY}",
+                        "Content-Type": "application/json",
+                    },
+                )
+            result = response.json()
+            print(f" RED ZONE [{transaction_ref}]: Refund submitted — {result}")
+            return result
+        except Exception as e:
+            print(f" RED ZONE [{transaction_ref}]: Refund API call failed — {e}. Flagged for manual review.")
+            return {"status": "error", "detail": str(e)}
 
     async def _trigger_step_up_auth(self, transaction_ref: str, body: dict):
         """
-        Amber Zone: Hold settlement and notify the user to re-authenticate.
-        In production, this calls an OTP or Face ID middleware endpoint.
+        Amber Zone: flag for manual review and notify for re-authentication.
+        In production, integrate with your OTP or Face ID middleware here.
         """
-        print(f"🔶 AMBER: Step-up auth triggered for {transaction_ref}")
-        # TODO: integrate with OTP/Face ID service
+        print(f" AMBER [{transaction_ref}]: Flagged for step-up auth. Score in uncertainty band.")
+        # TODO: POST to OTP/FaceID service with customer contact details
 
     async def decide(
         self,
@@ -89,17 +123,20 @@ class DecisionEngine:
         zone = self._determine_zone(scores.unified_score)
         top_signals = self._identify_top_signals(scores)
 
+        # gateway_ref is extracted during webhook normalisation and stored in body
+        gateway_ref = body.get("gateway_ref", "")
+
         if zone == FraudZone.RED:
-            await self._call_squad_dispute_api(
-                transaction_ref,
-                reason=f"Hybrid_Temporal_Graph_Transformer RED ZONE: unified score {scores.unified_score:.3f}. "
-                       f"Signals: {', '.join(top_signals)}",
+            reason = (
+                f"TGT RED ZONE: unified score {scores.unified_score:.3f}. "
+                f"Signals: {', '.join(top_signals) if top_signals else 'ensemble threshold exceeded'}"
             )
-            action = "DISPUTE_RAISED — funds frozen before settlement"
+            await self._initiate_refund(transaction_ref, gateway_ref, reason)
+            action = f"REFUND_INITIATED — {reason}"
 
         elif zone == FraudZone.AMBER:
             await self._trigger_step_up_auth(transaction_ref, body)
-            action = "STEP_UP_AUTH — settlement held pending re-verification"
+            action = "STEP_UP_AUTH — transaction flagged, pending re-verification"
 
         else:
             action = "APPROVED — transaction proceeds normally"
