@@ -37,15 +37,6 @@ class DecisionEngine:
     """
     Converts EnsembleScores into a routing decision and takes action.
 
-    GREEN  (<0.65): Transaction proceeds normally.
-    AMBER (0.65–0.89): Flagged for manual review. Step-up auth triggered (TODO: OTP/FaceID middleware).
-    RED   (>=0.90): Attempts a full refund via the backend refund API post-settlement.
-
-    IMPORTANT — backend integration constraint:
-    The backend does not expose a merchant-side freeze or hold API. TGT detects fraud after
-    the 'charge_successful' webhook fires, meaning the transaction has already succeeded.
-    The Red Zone action is a best-effort full refund. The gateway_ref required by the
-    Refund API is extracted from the normalised webhook body (Body.gateway_ref).
     """
 
     def _determine_zone(self, score: float) -> FraudZone:
@@ -110,7 +101,7 @@ class DecisionEngine:
         Amber Zone: flag for manual review and notify for re-authentication.
         In production, integrate with your OTP or Face ID middleware here.
         """
-        print(f" AMBER [{transaction_ref}]: Flagged for step-up auth. Score in uncertainty band.")
+        print(f" AMBER [{transaction_ref}]: Flagged for step-up auth. Action required.")
         # TODO: POST to OTP/FaceID service with customer contact details
 
     async def decide(

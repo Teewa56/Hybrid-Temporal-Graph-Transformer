@@ -69,11 +69,11 @@ def _normalise_card_payload(payload: dict) -> dict:
         "created_at": body.get("created_at", ""),
         "gateway_ref": body.get("gateway_ref", ""),
         "channel": body.get("transaction_type", "").lower(),
-        "ip_address": "",
-        "device_id": "",
-        "merchant_category": "unknown",
-        "is_new_device": False,
-        "is_new_recipient": False,
+        "ip_address": body.get("ip_address", ""),
+        "device_id": body.get("device_id", ""),
+        "merchant_category": body.get("merchant_category", "unknown"),
+        "is_new_device": body.get("is_new_device", False),
+        "is_new_recipient": body.get("is_new_recipient", False),
         "meta": body.get("meta", {}),
     }
 
@@ -83,7 +83,7 @@ def _normalise_va_payload(payload: dict) -> dict:
     return {
         "TransactionRef": payload.get("transaction_reference", ""),
         "amount": int(principal_naira * 100),
-        "customer_email": "",
+        "customer_email": payload.get("customer_email", ""),
         "customer_identifier": payload.get("customer_identifier", ""),
         "currency": payload.get("currency", "NGN"),
         "transaction_type": "VirtualAccount",
@@ -93,11 +93,11 @@ def _normalise_va_payload(payload: dict) -> dict:
         "channel": "virtual-account",
         "sender_name": payload.get("sender_name", ""),
         "virtual_account_number": payload.get("virtual_account_number", ""),
-        "ip_address": "",
-        "device_id": "",
-        "merchant_category": "unknown",
-        "is_new_device": False,
-        "is_new_recipient": False,
+        "ip_address": payload.get("ip_address", ""),
+        "device_id": payload.get("device_id", ""),
+        "merchant_category": payload.get("merchant_category", "unknown"),
+        "is_new_device": payload.get("is_new_device", False),
+        "is_new_recipient": payload.get("is_new_recipient", False),
         "meta": payload.get("meta", {}),
     }
 
